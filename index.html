@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15121f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Escalas">
+<title>Entrenador de Escalas</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Misma familia que Quintas y Ritmo: escenario a oscuras. Aquí el protagonista es el teclado. */
+  --ink:#15121f;
+  --stage:#1d1930;
+  --panel:#272240;
+  --line:#3a3458;
+  --paper:#f3eee4;
+  --muted:#a59fbd;
+  --brass:#f2c14e;
+  --ok:#5fd39a;
+  --bad:#ff6b6b;
+  --f-display:"Bricolage Grotesque","Avenir Next Condensed","Trebuchet MS",sans-serif;
+  --f-body:"Instrument Sans","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--ink);color:var(--paper);
+  font-family:var(--f-body);font-size:16px;line-height:1.45;
+  -webkit-tap-highlight-color:transparent;
+  background-image:radial-gradient(120% 60% at 50% 0%, #2a2350 0%, var(--ink) 62%);
+  background-attachment:fixed;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+
+.app{
+  max-width:480px;margin:0 auto;
+  display:flex;flex-direction:column;gap:14px;min-height:100%;
+  padding:calc(18px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:30px;line-height:1;letter-spacing:-.02em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--brass)}
+.best{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.best b{color:var(--paper);font-weight:600}
+.top-r{display:flex;align-items:center;gap:10px}
+.fs{padding:7px 11px;font-size:13px;color:var(--paper);white-space:nowrap}
+@media (display-mode:standalone){#btnFs{display:none !important}}
+@media (max-width:879px){
+  body[data-view="play"] header.top{display:none}
+  body[data-view="play"] .app{gap:10px;padding-top:calc(12px + env(safe-area-inset-top));padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  body[data-view="play"] .left, body[data-view="play"] .right, body[data-view="play"] section.view{gap:10px}
+}
+
+/* HUD */
+.hud{display:none;grid-template-columns:repeat(4,1fr);gap:8px}
+.hud div{background:var(--stage);border:1px solid var(--line);border-radius:12px;padding:7px 8px;text-align:center}
+.hud span{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hud b{font-family:var(--f-display);font-weight:800;font-size:19px;font-variant-numeric:tabular-nums}
+body[data-view="play"] .hud{display:grid}
+body[data-view="play"] header.top .best{display:none}
+
+/* Pregunta */
+.prompt{display:none;text-align:center;flex-direction:column;justify-content:center;min-height:74px}
+.prompt .main{font-family:var(--f-display);font-weight:800;font-size:30px;line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
+.prompt .sub{font-size:14.5px;color:var(--muted)}
+body[data-view="play"] .prompt{display:flex}
+.tbar{display:none;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.tbar i{display:block;height:100%;width:100%;background:var(--brass);border-radius:99px}
+body[data-view="play"] .tbar{display:block}
+
+/* Piano */
+.piano-wrap{background:var(--stage);border:1px solid var(--line);border-radius:18px;padding:10px 8px 8px}
+svg#piano{display:block;width:100%;height:auto;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:pointer}
+.key rect{stroke:var(--ink);stroke-width:2}
+.key.w rect{fill:var(--paper)}
+.key.b rect{fill:#0f0d18;stroke:#000}
+.key text{font-family:var(--f-display);font-weight:800;font-size:13px;text-anchor:middle;pointer-events:none;fill:#8d86a8}
+.key.b text{font-size:11px}
+.key.lit rect{fill:var(--c)}
+.key.lit text{fill:#15121f}
+.key.b.lit rect{stroke:var(--ink)}
+.key.good rect{fill:var(--ok)}
+.key.miss rect{fill:var(--bad)}
+.key.good text,.key.miss text{fill:#15121f}
+.key.now rect{stroke:var(--brass);stroke-width:4}
+.key .dot{display:none;fill:var(--brass);stroke:#15121f;stroke-width:2;pointer-events:none}
+.key.root .dot{display:block}
+
+.feedback{min-height:64px;text-align:center;display:flex;flex-direction:column;justify-content:center}
+.feedback .main{font-family:var(--f-display);font-weight:800;font-size:20px}
+.feedback .sub{font-size:14px;color:var(--muted)}
+.feedback.good .main{color:var(--ok)}
+.feedback.miss .main{color:var(--bad)}
+body:not([data-view="play"]) .feedback{display:none}
+body[data-view="play"] .study, body[data-view="play"] .ver{display:none}
+.ver{text-align:center;color:var(--muted);font-size:12px;margin:0}
+
+/* Paneles */
+.left,.right{display:flex;flex-direction:column;gap:14px}
+section.view{display:none;flex-direction:column;gap:14px}
+body[data-view="setup"] #setup,
+body[data-view="play"] #play,
+body[data-view="results"] #results,
+body[data-view="help"] #help{display:flex}
+body[data-view="help"] .left{display:none}
+
+.keys{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.keys button{
+  min-height:56px;border-radius:14px;border:1px solid var(--line);background:var(--panel);
+  font-family:var(--f-display);font-weight:800;font-size:16px;line-height:1.1;
+  display:flex;align-items:center;justify-content:center;padding:6px 8px;text-align:center;
+  transition:transform .08s, background .15s, border-color .15s;
+}
+.keys button:active{transform:scale(.97)}
+.keys button.good{background:var(--ok);border-color:var(--ok);color:#10261b}
+.keys button.miss{background:var(--bad);border-color:var(--bad);color:#2b0d0d;animation:shake .3s}
+.keys.locked button{pointer-events:none}
+.keys.locked button:not(.good):not(.miss){opacity:.45}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+.cta{border:0;border-radius:16px;background:var(--brass);color:#2a1f00;font-family:var(--f-display);font-weight:800;font-size:20px;padding:15px 18px;width:100%}
+.cta:active{transform:scale(.98)}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--muted);font-size:14px}
+.row-btns{display:flex;gap:10px}
+.row-btns .ghost{flex:1;color:var(--paper)}
+.ghost[aria-pressed="true"]{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+
+.card{background:var(--stage);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:14px}
+.card h2{font-family:var(--f-display);font-weight:800;font-size:17px;margin:0;letter-spacing:-.01em}
+.field{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.field.col{flex-direction:column;align-items:stretch;gap:8px}
+.field > label, .field > .lab{font-size:15px}
+.field small{display:block;color:var(--muted);font-size:12.5px}
+.seg{display:inline-flex;background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:9px;padding:8px 11px;font-size:14px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink)}
+.multi{display:flex;flex-wrap:wrap;gap:6px}
+.multi button{border:1px solid var(--line);background:var(--ink);border-radius:99px;padding:8px 13px;font-size:14px;font-weight:600;color:var(--muted)}
+.multi button[aria-pressed="true"]{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.stepper{display:inline-flex;align-items:center;gap:4px;background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:3px}
+.stepper button{width:38px;height:36px;border:0;border-radius:9px;background:var(--panel);font-size:20px;font-weight:600;line-height:1}
+.stepper output{min-width:54px;text-align:center;font-family:var(--f-display);font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.switch{position:relative;width:50px;height:30px;flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;width:100%;height:100%;cursor:pointer}
+.switch i{position:absolute;inset:0;background:var(--ink);border:1px solid var(--line);border-radius:99px;transition:background .15s;pointer-events:none}
+.switch i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--muted);transition:transform .15s, background .15s}
+.switch input:checked + i{background:#4a3c12;border-color:var(--brass)}
+.switch input:checked + i::after{transform:translateX(20px);background:var(--brass)}
+.switch input:focus-visible + i{outline:2px solid var(--brass);outline-offset:2px}
+
+/* Explorador */
+.notes{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1.2;letter-spacing:.01em;margin:0;text-wrap:balance}
+.formula{font-size:13.5px;color:var(--muted);margin:0;font-variant-numeric:tabular-nums}
+.formula b{color:var(--paper);font-weight:600}
+.roots{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.roots button{border:1px solid var(--line);background:var(--ink);border-radius:10px;padding:9px 0;font-family:var(--f-display);font-weight:800;font-size:15px;color:var(--muted)}
+.roots button[aria-pressed="true"]{background:var(--brass);color:#2a1f00;border-color:var(--brass)}
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);color:var(--paper);font-weight:600;font-size:13.5px;border-radius:99px;padding:5px 11px}
+.chip small{color:var(--muted);font-size:11.5px}
+.hint{color:var(--muted);font-size:13.5px;margin:0}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini div{background:var(--ink);border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center}
+.mini span{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mini b{font-family:var(--f-display);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar-col .v{font-size:12px;font-variant-numeric:tabular-nums}
+.bar-col .slot{height:64px;width:100%;display:flex;align-items:flex-end;border-bottom:1px solid var(--line)}
+.bar-col .slot i{display:block;width:100%;background:var(--brass);border-radius:5px 5px 0 0}
+.bar-col .slot i.empty{background:var(--line)}
+.bar-col .d{font-size:12px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stats div{background:var(--stage);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.stats span{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stats b{font-family:var(--f-display);font-weight:800;font-size:26px;font-variant-numeric:tabular-nums}
+.verdict{font-family:var(--f-display);font-weight:800;font-size:24px;margin:0;text-wrap:balance}
+
+/* Mapa de dominio */
+.heat{display:grid;grid-template-columns:minmax(0,1fr) repeat(12,minmax(0,20px));gap:3px;align-items:center}
+.heat .h{font-size:9px;color:var(--muted);text-align:center;overflow:hidden;white-space:nowrap}
+.heat .n{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:4px}
+.heat button{border:0;padding:0;height:18px;border-radius:4px;background:var(--m)}
+.legend{display:flex;align-items:center;flex-wrap:wrap;gap:6px 14px;color:var(--muted);font-size:12.5px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+textarea#bkArea{width:100%;min-height:74px;background:var(--ink);color:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px;font:13px/1.4 ui-monospace,Menlo,monospace;resize:vertical;word-break:break-all}
+#help h2{font-family:var(--f-display);font-weight:800;font-size:18px;margin:6px 0 0}
+#help p,#help li{font-size:15px;margin:0}
+#help ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+#help b{color:var(--brass);font-weight:600}
+#help .card{gap:10px}
+
+@media (min-width:880px){
+  .app{max-width:1080px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);column-gap:36px;align-content:start}
+  header.top,.hud{grid-column:1/-1}
+  .left{grid-column:1}
+  .right{grid-column:2}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body data-view="setup">
+<main class="app">
+  <header class="top">
+    <h1>Entrenador de <em>escalas</em></h1>
+    <div class="top-r">
+      <div class="best">Récord <b id="bestScore">0</b></div>
+      <button class="ghost fs" id="btnHelp" type="button">Ayuda</button>
+      <button class="ghost fs" id="btnFs" type="button" hidden>Pantalla completa</button>
+    </div>
+  </header>
+
+  <div class="hud" aria-live="off">
+    <div><span>Pregunta</span><b id="hudQ">1/10</b></div>
+    <div><span>Puntos</span><b id="hudPts">0</b></div>
+    <div><span>Racha</span><b id="hudStreak">0</b></div>
+    <div><span>Tiempo</span><b id="hudT">–</b></div>
+  </div>
+
+  <div class="left">
+    <div class="prompt" aria-live="polite">
+      <div class="main" id="pMain"></div>
+      <div class="sub" id="pSub"></div>
+    </div>
+    <div class="tbar"><i id="tbar"></i></div>
+    <div class="piano-wrap">
+      <svg id="piano" viewBox="0 0 600 190" role="img" aria-label="Piano de dos octavas"></svg>
+    </div>
+    <div class="feedback" id="feedback" aria-live="polite">
+      <div class="main" id="fbMain"></div>
+      <div class="sub" id="fbSub"></div>
+    </div>
+    <div class="card study" id="study">
+      <h2 id="studyTitle">Explorador</h2>
+      <div id="studyBody" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+  </div>
+
+  <div class="right">
+    <!-- AJUSTES -->
+    <section class="view" id="setup">
+      <button class="cta" id="btnStart">Empezar ronda</button>
+      <div class="card">
+        <h2>Ajustes de la ronda</h2>
+        <div class="field">
+          <span class="lab">Notación</span>
+          <div class="seg" data-key="nota">
+            <button type="button" data-val="us">C D E</button>
+            <button type="button" data-val="eu">Do Re Mi</button>
+          </div>
+        </div>
+        <div class="field col">
+          <span class="lab">Familias de escalas</span>
+          <div class="multi" id="groups"></div>
+        </div>
+        <div class="field">
+          <span class="lab">Tonalidades</span>
+          <div class="seg" data-key="roots">
+            <button type="button" data-val="nat">Teclas blancas</button>
+            <button type="button" data-val="all">Las 12</button>
+          </div>
+        </div>
+        <div class="field col">
+          <span class="lab">Tipos de ejercicio</span>
+          <div class="multi" id="kinds">
+            <button type="button" data-val="play">Tocar</button>
+            <button type="button" data-val="find">Grados</button>
+            <button type="button" data-val="char">Nota característica</button>
+            <button type="button" data-val="odd">Intrusa</button>
+            <button type="button" data-val="name">¿Qué escala es?</button>
+            <button type="button" data-val="parent">Escala madre</button>
+            <button type="button" data-val="ear">Oído</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lab">Preguntas</span>
+          <div class="stepper">
+            <button type="button" id="qMinus" aria-label="Menos preguntas">−</button>
+            <output id="qOut">10</output>
+            <button type="button" id="qPlus" aria-label="Más preguntas">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lab">Tiempo máximo<small>«Tocar» y «Oído» tienen el doble.</small></span>
+          <div class="stepper">
+            <button type="button" id="tMinus" aria-label="Menos tiempo">−</button>
+            <output id="tOut">15 s</output>
+            <button type="button" id="tPlus" aria-label="Más tiempo">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="udToggle">Subir y bajar<small>En «Tocar», la escala se toca de ida y vuelta.</small></label>
+          <span class="switch"><input type="checkbox" id="udToggle"><i></i></span>
+        </div>
+        <div class="field">
+          <label for="namesToggle">Nombres en las teclas<small>Ayuda para empezar. Apágalo en cuanto puedas.</small></label>
+          <span class="switch"><input type="checkbox" id="namesToggle"><i></i></span>
+        </div>
+        <div class="field">
+          <label for="retryToggle">Reintento inmediato<small>Lo que fallas vuelve dos o tres preguntas después.</small></label>
+          <span class="switch"><input type="checkbox" id="retryToggle" checked><i></i></span>
+        </div>
+        <div class="field">
+          <label for="soundToggle">Sonido<small>Sin sonido no hay ejercicios de «Oído».</small></label>
+          <span class="switch"><input type="checkbox" id="soundToggle" checked><i></i></span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Tu progreso</h2>
+        <div class="mini">
+          <div><span>Racha de días</span><b id="pStreak">0</b></div>
+          <div><span>Preguntas hoy</span><b id="pToday">0</b></div>
+          <div><span>Aciertos hoy</span><b id="pAcc">–</b></div>
+        </div>
+        <p class="hint">Segundos por acierto, últimos 7 días (menos es mejor)</p>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="card">
+        <h2>Tu dominio</h2>
+        <p class="hint">Cada casilla es una escala en una tonalidad. Tócala para verla en el piano.</p>
+        <div class="heat" id="heat"></div>
+        <div class="legend">
+          <span><i style="background:#5fd39a"></i> Dominada</span>
+          <span><i style="background:#f2c14e"></i> En ello</span>
+          <span><i style="background:#ff6b6b"></i> A reforzar</span>
+          <span><i style="background:#3a3458"></i> Sin datos</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Tu memoria de repaso</h2>
+        <div class="chips" id="weakChips"></div>
+        <p class="hint" id="weakHint"></p>
+        <button class="ghost" id="btnReset" type="button">Borrar memoria</button>
+      </div>
+      <div class="card">
+        <h2>Copia de seguridad</h2>
+        <p class="hint">Crea un código con tu progreso, récord y ajustes. Pégalo aquí en otro dispositivo para restaurarlo.</p>
+        <label for="bkArea" class="hint">Código</label>
+        <textarea id="bkArea" spellcheck="false" autocomplete="off" placeholder="EE1:…"></textarea>
+        <div class="row-btns">
+          <button class="ghost" id="btnExport" type="button">Crear código</button>
+          <button class="ghost" id="btnImport" type="button">Restaurar</button>
+        </div>
+        <p class="hint" id="bkMsg" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- AYUDA -->
+    <section class="view" id="help">
+      <button class="ghost" id="btnHelpBack" type="button" style="color:var(--paper)">Volver</button>
+      <div class="card">
+        <h2>La idea</h2>
+        <p>El objetivo es que al pensar «Re dórico» veas las teclas encendidas en tu cabeza antes de tocar. Para eso la app trabaja tres cosas: la <b>forma</b> de la escala sobre el teclado, su <b>fórmula</b> de grados y la <b>nota que la distingue</b> de una escala que ya conoces.</p>
+        <p>El truco más rápido: no memorices 21 escalas, memoriza dos (mayor y menor natural) y aprende qué nota cambia en cada una de las demás. Dórico es «menor con la 6 mayor»; lidio es «mayor con ♯4».</p>
+      </div>
+      <div class="card">
+        <h2>El explorador</h2>
+        <ul>
+          <li>Elige tónica y escala y la verás en el piano, con cada grado de un color y la tónica en dorado.</li>
+          <li><b>Notas / Grados</b> cambia lo que se escribe en las teclas.</li>
+          <li><b>+5ª</b> lleva la misma escala a la tonalidad siguiente del círculo de quintas: recorre las doce sin saltarte ninguna.</li>
+          <li><b>Prueba libre</b> apaga las teclas y solo deja marcada la tónica. Toca la escala de memoria: las teclas correctas se encienden y las que no pertenecen parpadean en rojo.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Tipos de ejercicio</h2>
+        <ul>
+          <li><b>Tocar.</b> Te dan tónica y escala y la tocas subiendo desde la tecla marcada hasta la octava. Un tropiezo se perdona; dos, no.</li>
+          <li><b>Grados.</b> «El ♭7 de Re dórico»: tocas esa nota.</li>
+          <li><b>Nota característica.</b> Tocas la nota que distingue a la escala de su escala de referencia.</li>
+          <li><b>Intrusa.</b> El piano muestra la escala con una nota equivocada. Tócala.</li>
+          <li><b>¿Qué escala es?</b> Ves las teclas encendidas y eliges el nombre.</li>
+          <li><b>Escala madre.</b> «¿De qué escala mayor salen las notas de Mi frigio?»</li>
+          <li><b>Oído.</b> Suena la escala y eliges cuál es.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Puntos, memoria y dominio</h2>
+        <ul>
+          <li>Cada acierto vale 100 puntos, hasta 100 más por rapidez y 10 por cada acierto seguido.</li>
+          <li>La app recuerda las escalas y tonalidades que fallas y las pregunta más a menudo hasta que las aciertes varias veces.</li>
+          <li>«Tu dominio» es un mapa de las 21 escalas en las 12 tonalidades. El verde exige acertar y hacerlo con soltura.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Plan recomendado</h2>
+        <ul>
+          <li>Empieza con «Básicas» en teclas blancas hasta ver el mapa en verde; después pasa a «Las 12».</li>
+          <li>Añade una familia cada vez. Los modos, siempre comparándolos con mayor o menor.</li>
+          <li>Diez minutos al día rinden más que una hora a la semana. Cuando una ronda salga redonda, baja el tiempo máximo.</li>
+        </ul>
+        <p>Todo se guarda en este dispositivo. Usa «Copia de seguridad» para llevar tu progreso a otro. En iPhone, el interruptor de silencio apaga el sonido.</p>
+      </div>
+    </section>
+
+    <!-- JUEGO -->
+    <section class="view" id="play">
+      <div class="keys" id="keys"></div>
+      <button class="ghost" id="btnHear" type="button" style="display:none;color:var(--paper)">Volver a escuchar</button>
+      <button class="ghost" id="btnQuit" type="button">Salir de la ronda</button>
+    </section>
+
+    <!-- RESULTADOS -->
+    <section class="view" id="results">
+      <p class="verdict" id="verdict"></p>
+      <div class="stats">
+        <div><span>Puntos</span><b id="rPts">0</b></div>
+        <div><span>Aciertos</span><b id="rOk">0/0</b></div>
+        <div><span>Tiempo medio</span><b id="rAvg">–</b></div>
+        <div><span>Mejor racha</span><b id="rStreak">0</b></div>
+      </div>
+      <div class="card">
+        <h2>Fallos de esta ronda</h2>
+        <div class="chips" id="rMiss"></div>
+        <p class="hint" id="rMissHint"></p>
+      </div>
+      <div class="card">
+        <h2>Se repetirán más en la próxima</h2>
+        <div class="chips" id="rWeak"></div>
+        <p class="hint" id="rWeakHint"></p>
+      </div>
+      <div class="row-btns">
+        <button class="ghost" id="btnSetup" type="button">Ajustes</button>
+      </div>
+      <button class="cta" id="btnAgain">Otra ronda</button>
+    </section>
+    <p class="ver">Versión 1.0</p>
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+/* ---------- Teoría ---------- */
+var LET=['C','D','E','F','G','A','B'], EU=['Do','Re','Mi','Fa','Sol','La','Si'];
+var LETPC=[0,2,4,5,7,9,11];
+var GROUPS=[['bas','Básicas'],['pen','Pentatónicas y blues'],['mod','Modos'],['men','Menores'],['jaz','Jazz y exóticas']];
+var SCALES=[
+ {k:'maj',g:'bas',name:'Mayor (jónico)',short:'mayor',f:'1 2 3 4 5 6 7',
+  how:'La referencia de todo. Las demás escalas se piensan como una mayor a la que se le cambia alguna nota.',mood:'Luminosa y estable.',ex:'«Let It Be» (The Beatles)'},
+ {k:'min',g:'bas',name:'Menor natural (eólico)',short:'menor natural',f:'1 2 b3 4 5 b6 b7',m:9,ref:'maj',ch:['b3','b6','b7'],
+  how:'Mayor con ♭3, ♭6 y ♭7. Tiene las mismas notas que la mayor que está tono y medio por encima (su relativa).',mood:'Melancólica.',ex:'«Losing My Religion» (R.E.M.)'},
+ {k:'pmaj',g:'pen',name:'Pentatónica mayor',short:'pentatónica mayor',f:'1 2 3 5 6',ref:'maj',ch:[],
+  how:'Mayor sin la 4.ª ni la 7.ª: desaparecen los semitonos y nada choca.',mood:'Abierta: folk, country, pop.',ex:'Riff de «My Girl» (The Temptations)'},
+ {k:'pmin',g:'pen',name:'Pentatónica menor',short:'pentatónica menor',f:'1 b3 4 5 b7',ref:'min',ch:[],
+  how:'Menor natural sin la 2.ª ni la 6.ª. Mismas notas que la pentatónica mayor relativa.',mood:'La escala de los solos de rock y blues.',ex:'Solo de «Stairway to Heaven» (Led Zeppelin)'},
+ {k:'blu',g:'pen',name:'Blues',short:'blues',f:'1 b3 4 b5 5 b7',ref:'pmin',ch:['b5'],
+  how:'Pentatónica menor más la ♭5, la «blue note».',mood:'Tensa y arrastrada.',ex:'Riff de «Smoke on the Water» (Deep Purple)'},
+ {k:'bmaj',g:'pen',name:'Blues mayor',short:'blues mayor',f:'1 2 b3 3 5 6',ref:'pmaj',ch:['b3'],
+  how:'Pentatónica mayor más la ♭3 como nota de paso hacia la 3.ª.',mood:'Blues alegre, country, gospel.',ex:'Líneas de country y rock and roll'},
+ {k:'dor',g:'mod',name:'Dórico',short:'dórico',f:'1 2 b3 4 5 6 b7',m:2,ref:'min',ch:['6'],
+  how:'Menor natural con la 6.ª mayor.',mood:'Menor pero con luz: funk, jazz modal, house.',ex:'«So What» (Miles Davis), «Scarborough Fair»'},
+ {k:'phr',g:'mod',name:'Frigio',short:'frigio',f:'1 b2 b3 4 5 b6 b7',m:4,ref:'min',ch:['b2'],
+  how:'Menor natural con ♭2.',mood:'Oscura, de sabor español.',ex:'La cadencia andaluza; «White Rabbit» (Jefferson Airplane)'},
+ {k:'lyd',g:'mod',name:'Lidio',short:'lidio',f:'1 2 3 #4 5 6 7',m:5,ref:'maj',ch:['#4'],
+  how:'Mayor con ♯4.',mood:'Flotante, de ensueño; muy de cine.',ex:'«Flying in a Blue Dream» (Joe Satriani)'},
+ {k:'mix',g:'mod',name:'Mixolidio',short:'mixolidio',f:'1 2 3 4 5 6 b7',m:7,ref:'maj',ch:['b7'],
+  how:'Mayor con ♭7.',mood:'Mayor con aire de blues y rock.',ex:'«Sweet Home Alabama», «Norwegian Wood»'},
+ {k:'loc',g:'mod',name:'Locrio',short:'locrio',f:'1 b2 b3 4 b5 b6 b7',m:11,ref:'phr',ch:['b5'],
+  how:'Frigio con ♭5 (menor con ♭2 y ♭5).',mood:'Inestable; suena sobre acordes m7♭5.',ex:'Riff de «Army of Me» (Björk)'},
+ {k:'har',g:'men',name:'Menor armónica',short:'menor armónica',f:'1 2 b3 4 5 b6 7',ref:'min',ch:['7'],
+  how:'Menor natural con la 7.ª mayor (la sensible). Deja un salto de tono y medio entre ♭6 y 7.',mood:'Clásica y dramática, con aire oriental.',ex:'El V7 de las tonalidades menores; Bach, Malmsteen'},
+ {k:'mel',g:'men',name:'Menor melódica',short:'menor melódica',f:'1 2 b3 4 5 6 7',ref:'maj',ch:['b3'],
+  how:'Mayor con ♭3 (o menor con la 6.ª y la 7.ª mayores).',mood:'La menor moderna del jazz.',ex:'De ella salen la alterada y la lidia dominante'},
+ {k:'phd',g:'jaz',name:'Frigio dominante',short:'frigio dominante',f:'1 b2 3 4 5 b6 b7',ref:'phr',ch:['3'],
+  how:'Frigio con la 3.ª mayor. Es el 5.º modo de la menor armónica.',mood:'Flamenco, música árabe y klezmer.',ex:'«Hava Nagila»; el acorde de reposo flamenco'},
+ {k:'ldo',g:'jaz',name:'Lidio dominante',short:'lidio dominante',f:'1 2 3 #4 5 6 b7',ref:'mix',ch:['#4'],
+  how:'Mixolidio con ♯4 (mayor con ♯4 y ♭7). 4.º modo de la menor melódica.',mood:'Brillante y pícara.',ex:'Tema de «Los Simpson»; acordes 7(♯11)'},
+ {k:'alt',g:'jaz',name:'Alterada (superlocria)',short:'alterada',f:'1 b2 b3 b4 b5 b6 b7',ref:'loc',ch:['b4'],
+  how:'Locrio con ♭4: todo alterado menos la tónica. Son las notas de la menor melódica que está un semitono por encima.',mood:'Máxima tensión.',ex:'Sobre V7alt en jazz'},
+ {k:'wt',g:'jaz',name:'Tonos enteros',short:'de tonos enteros',f:'1 2 3 #4 #5 b7',
+  how:'Seis notas separadas siempre por un tono. Solo existen dos escalas distintas.',mood:'Onírica, sin gravedad.',ex:'«Voiles» (Debussy); intro de «You Are the Sunshine of My Life»'},
+ {k:'dim',g:'jaz',name:'Disminuida (tono–semitono)',short:'disminuida tono–semitono',f:'1 2 b3 4 b5 b6 6 7',
+  how:'Alterna tono y semitono. Ocho notas; solo existen tres distintas.',mood:'Misteriosa, simétrica.',ex:'Sobre acordes disminuidos (dim7)'},
+ {k:'dom',g:'jaz',name:'Disminuida (semitono–tono)',short:'disminuida semitono–tono',f:'1 b2 b3 3 #4 5 6 b7',
+  how:'Alterna semitono y tono, empezando por el semitono.',mood:'Tensa y angulosa.',ex:'Sobre dominantes 13(♭9)'},
+ {k:'dha',g:'jaz',name:'Doble armónica',short:'doble armónica',f:'1 b2 3 4 5 b6 7',ref:'maj',ch:['b2','b6'],
+  how:'Mayor con ♭2 y ♭6: dos saltos de tono y medio.',mood:'Árabe, bizantina.',ex:'«Misirlou» (Dick Dale)'},
+ {k:'hun',g:'jaz',name:'Húngara menor',short:'húngara menor',f:'1 2 b3 #4 5 b6 7',ref:'har',ch:['#4'],
+  how:'Menor armónica con ♯4.',mood:'Zíngara, dramática.',ex:'Rapsodias húngaras de Liszt'}
+];
+var S={};
+SCALES.forEach(function(s){
+  s.f=s.f.split(' ');
+  s.deg=s.f.map(function(d){
+    var m=/^([b#]*)(\d)$/.exec(d), acc=0, i;
+    for(i=0;i<m[1].length;i++) acc+=m[1][i]==='#'?1:-1;
+    var off=+m[2]-1;
+    return {off:off,semi:((LETPC[off]+acc)%12+12)%12};
+  });
+  s.semis=s.deg.map(function(d){return d.semi});
+  S[s.k]=s;
+});
+var spellCache={};
+function spellFrom(l,a,sc){
+  var rootPc=((LETPC[l]+a)%12+12)%12;
+  return sc.deg.map(function(d){
+    var L=(l+d.off)%7, pc=(rootPc+d.semi)%12, diff=((pc-LETPC[L])%12+12)%12;
+    if(diff>6) diff-=12;
+    return {l:L,a:diff,pc:pc,off:d.off};
+  });
+}
+function spell(pc,sc){
+  var key=sc.k+':'+pc; if(spellCache[key]) return spellCache[key];
+  var best=null, bc=1e9;
+  for(var l=0;l<7;l++) for(var a=-1;a<=1;a++){
+    if(((LETPC[l]+a)%12+12)%12!==pc) continue;
+    var sp=spellFrom(l,a,sc), c=0;
+    sp.forEach(function(n){ c+=Math.abs(n.a)+(Math.abs(n.a)>1?10:0); });
+    if(c<bc){bc=c;best=sp}
+  }
+  return (spellCache[key]=best);
+}
+function accStr(a){return a===0?'':a>0?new Array(a+1).join('♯'):new Array(-a+1).join('♭')}
+function nm(n){return (settings.nota==='eu'?EU:LET)[n.l]+accStr(n.a)}
+function degStr(d){return d.replace(/b/g,'♭').replace(/#/g,'♯')}
+function rootName(pc,sc){return nm(spell(pc,sc||S.maj)[0])}
+function fullName(pc,sc){return rootName(pc,sc)+' '+sc.short}
+function notesStr(pc,sc){return spell(pc,sc).map(nm).join(' ')}
+function stepsStr(sc){
+  var s=sc.semis.concat(12), out=[];
+  for(var i=1;i<s.length;i++){ var d=s[i]-s[i-1]; out.push(d===1?'S':d===2?'T':d===3?'T½':'2T'); }
+  return out.join(' ');
+}
+var ORD={2:'2.º',4:'3.er',5:'4.º',7:'5.º',9:'6.º',11:'7.º'};
+function parentName(pc,sc){
+  var ppc=(pc-sc.m+12)%12, sp=spell(pc,sc);
+  for(var i=0;i<sp.length;i++) if(sp[i].pc===ppc) return nm(sp[i]);
+  return rootName(ppc);
+}
+function degColor(off){return off===0?'#f2c14e':'oklch(0.8 0.13 '+((off*51+200)%360)+')'}
+
+/* ---------- Utilidades y estado ---------- */
+var SVGNS='http://www.w3.org/2000/svg';
+var KINDS=['play','find','char','odd','name','parent','ear'];
+var MCOL={none:'#3a3458',bad:'#ff6b6b',mid:'#f2c14e',good:'#5fd39a'};
+function $(id){return document.getElementById(id)}
+function load(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function rnd(n){return Math.floor(Math.random()*n)}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=rnd(i+1),t=a[i];a[i]=a[j];a[j]=t}return a}
+function el(name,attrs){var e=document.createElementNS(SVGNS,name);for(var k in attrs)e.setAttribute(k,attrs[k]);return e}
+function mk(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
+
+var DEFAULTS={nota:'us',groups:['bas','pen','mod'],roots:'nat',kinds:KINDS.slice(),num:10,time:15,updown:false,names:false,retry:true,sound:true};
+var settings, stats, days, best, ex;
+function loadAll(){
+  settings=Object.assign({},DEFAULTS,load('ee.settings.v1',{}));
+  if(!Array.isArray(settings.kinds)) settings.kinds=KINDS.slice();
+  settings.kinds=settings.kinds.filter(function(k){return KINDS.indexOf(k)>-1});
+  if(!settings.kinds.length) settings.kinds=['play'];
+  if(!Array.isArray(settings.groups)) settings.groups=DEFAULTS.groups.slice();
+  settings.groups=settings.groups.filter(function(g){return GROUPS.some(function(x){return x[0]===g})});
+  if(!settings.groups.length) settings.groups=['bas'];
+  if(settings.nota!=='eu') settings.nota='us';
+  if(settings.roots!=='all') settings.roots='nat';
+  settings.num=Math.max(5,Math.min(40,+settings.num||10));
+  settings.time=Math.max(0,Math.min(60,+settings.time||0));
+  stats=load('ee.stats.v1',{}); days=load('ee.days.v1',{}); best=+load('ee.best.v1',0)||0;
+  ex=load('ee.ex.v1',null);
+  if(!ex||!S[ex.sk]||!(ex.pc>=0&&ex.pc<12)) ex={pc:0,sk:'maj',lab:'n'};
+  ex.free=false;
+}
+loadAll();
+
+function st(id){ if(!stats[id]) stats[id]={n:0,ok:0,score:0}; return stats[id]; }
+function upd(id,good){
+  var s=st(id); s.n++;
+  if(good){ s.ok++; s.score=Math.max(0,s.score-1); } else s.score=Math.min(6,s.score+2);
+}
+function mastery(sk,pc){
+  var s=stats['x:'+sk+':'+pc];
+  if(!s||!s.n) return 'none';
+  var r=s.ok/s.n;
+  if(r<0.6) return 'bad';
+  if(s.n<2||r<0.85) return 'mid';
+  return 'good';
+}
+function idName(id){
+  if(id.indexOf('sc:')===0) return S[id.slice(3)]?S[id.slice(3)].name:id;
+  if(id.indexOf('r:')===0) return 'Tonalidad de '+rootName(+id.slice(2));
+  return id;
+}
+function chip(id,extra){
+  var s=mk('span','chip',idName(id));
+  if(extra) s.appendChild(mk('small','',extra));
+  return s;
+}
+
+/* ---------- Días ---------- */
+function dayKey(d){
+  function p(n){return n<10?'0'+n:''+n}
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+function dayAgo(n){var d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-n);return d}
+function today(){var k=dayKey(new Date()); if(!days[k]) days[k]={q:0,ok:0,sumT:0,nT:0,rounds:0}; return days[k];}
+function dayStreak(){
+  var n=0, t=days[dayKey(dayAgo(0))], i=(t&&t.q>0)?0:1;
+  while(true){var e=days[dayKey(dayAgo(i))]; if(e&&e.q>0){n++;i++}else break;}
+  return n;
+}
+function paintProgress(){
+  var t=days[dayKey(new Date())];
+  $('pStreak').textContent=dayStreak();
+  $('pToday').textContent=t&&t.q?t.q:0;
+  $('pAcc').textContent=t&&t.q?Math.round(100*t.ok/t.q)+' %':'–';
+  var box=$('bars'), rows=[], max=0;
+  for(var i=6;i>=0;i--){
+    var d=dayAgo(i), e=days[dayKey(d)], avg=e&&e.nT?e.sumT/e.nT:null;
+    if(avg!==null&&avg>max) max=avg;
+    rows.push({d:d,avg:avg});
+  }
+  box.innerHTML='';
+  rows.forEach(function(r){
+    var col=mk('div','bar-col');
+    var v=mk('span','v',r.avg===null?'·':r.avg.toFixed(1).replace('.',','));
+    var slot=mk('div','slot'), bar=mk('i');
+    bar.style.height=(r.avg===null?3:Math.max(10,100*r.avg/(max||1)))+'%';
+    if(r.avg===null) bar.className='empty';
+    slot.appendChild(bar);
+    col.appendChild(v);col.appendChild(slot);col.appendChild(mk('span','d',['D','L','M','X','J','V','S'][r.d.getDay()]));
+    box.appendChild(col);
+  });
+}
+
+/* ---------- Piano ---------- */
+var svg=$('piano'), K=[], WW=40, WH=190, BW=24, BH=118, NKEYS=25;
+function buildPiano(){
+  var blackPc={1:1,3:1,6:1,8:1,10:1}, wi=0, i, k, whites=[], blacks=[];
+  for(i=0;i<NKEYS;i++){
+    var pc=i%12, black=!!blackPc[pc];
+    k={i:i,pc:pc,black:black};
+    if(black){ k.cx=wi*WW; k.x=k.cx-BW/2; }
+    else{ k.x=wi*WW; k.cx=k.x+WW/2; k.l=LETPC.indexOf(pc); wi++; }
+    k.g=el('g',{});
+    k.rect=el('rect',black?{x:k.x,y:0,width:BW,height:BH,rx:3}:{x:k.x+1,y:1,width:WW-2,height:WH-2,rx:5});
+    k.dot=el('circle',{'class':'dot',cx:k.cx,cy:black?BH-38:WH-46,r:black?5:6.5});
+    k.tx=el('text',{x:k.cx,y:black?BH-12:WH-14});
+    k.g.appendChild(k.rect); k.g.appendChild(k.dot); k.g.appendChild(k.tx);
+    (black?blacks:whites).push(k.g); K.push(k);
+  }
+  whites.concat(blacks).forEach(function(g){svg.appendChild(g)});
+  svg.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    var r=svg.getBoundingClientRect(); if(!r.width) return;
+    var x=(e.clientX-r.left)/r.width*600, y=(e.clientY-r.top)/r.height*WH, hit=-1, bd=1e9;
+    if(y<BH){
+      K.forEach(function(k){ if(k.black){ var d=Math.abs(x-k.cx); if(d<=15&&d<bd){bd=d;hit=k.i} } });
+    }
+    if(hit<0){
+      var w=Math.max(0,Math.min(14,Math.floor(x/WW)));
+      K.forEach(function(k){ if(!k.black&&Math.round(k.x/WW)===w) hit=k.i; });
+    }
+    if(hit>=0) keyTap(hit);
+  });
+  svg.addEventListener('contextmenu',function(e){e.preventDefault()});
+}
+function setLabel(k,txt){
+  k.tx.textContent=txt;
+  var long=txt.length>(k.black?2:3);
+  k.tx.setAttribute('font-size',k.black?(long?8.5:11):(long?11:13));
+}
+function resetKeys(){
+  K.forEach(function(k){
+    k.g.setAttribute('class','key '+(k.black?'b':'w'));
+    k.g.style.removeProperty('--c');
+    setLabel(k,(settings.names&&!k.black)?nm({l:k.l,a:0}):'');
+  });
+}
+function light(i,color,label){
+  var k=K[i]; if(!k) return;
+  k.g.classList.add('lit'); k.g.style.setProperty('--c',color);
+  setLabel(k,label||'');
+}
+function flag(i,cls,ms){
+  var k=K[i]; if(!k) return;
+  k.g.classList.add(cls);
+  if(ms) setTimeout(function(){k.g.classList.remove(cls)},ms);
+}
+/* Enciende la escala desde la tónica (tecla pc) hasta su octava */
+function showScale(pc,sc,lab){
+  resetKeys();
+  var sp=spell(pc,sc);
+  sc.semis.concat(12).forEach(function(s,j){
+    var n=sp[j%sp.length], d=sc.f[j%sp.length];
+    light(pc+s,degColor(n.off),lab==='d'?degStr(d):lab==='n'?nm(n):'');
+  });
+  K[pc].g.classList.add('root');
+}
+
+/* ---------- Audio ---------- */
+var actx=null, master=null, bus=null, seqTimers=[];
+function initAudio(){
+  if(!settings.sound) return;
+  try{
+    if(!actx){
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+      actx=new AC(); master=actx.createGain(); master.gain.value=0.8; master.connect(actx.destination);
+      newBus();
+    }
+    if(actx.state!=='running') actx.resume();
+  }catch(e){actx=null}
+}
+function withAudio(fn){
+  initAudio();
+  if(settings.sound&&actx&&actx.state!=='running'){
+    var done=false, go=function(){ if(!done){done=true;fn()} };
+    try{ actx.resume().then(go,go); }catch(e){ go(); }
+    setTimeout(go,500);
+  }else fn();
+}
+function newBus(){
+  if(!actx) return;
+  if(bus){ try{ bus.gain.value=0; bus.disconnect(); }catch(e){} }
+  bus=actx.createGain(); bus.connect(master);
+}
+function audioOn(){return !!(settings.sound&&actx&&actx.state==='running')}
+function note(i,t,dur){
+  if(!audioOn()) return;
+  try{
+    t=Math.max(t||0,actx.currentTime); dur=dur||0.7;
+    var f=440*Math.pow(2,(48+i-69)/12), g=actx.createGain();
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.32,t+0.008);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur); g.connect(bus);
+    var o=actx.createOscillator(); o.type='triangle'; o.frequency.value=f; o.connect(g); o.start(t); o.stop(t+dur+0.05);
+    var g2=actx.createGain(); g2.gain.value=0.25; g2.connect(g);
+    var o2=actx.createOscillator(); o2.type='sine'; o2.frequency.value=f*2; o2.connect(g2); o2.start(t); o2.stop(t+dur+0.05);
+  }catch(e){}
+}
+function stopSeq(){
+  seqTimers.forEach(clearTimeout); seqTimers=[];
+  K.forEach(function(k){k.g.classList.remove('now')});
+  if(actx) newBus();
+}
+function playKeys(keys,showNow,step){
+  stopSeq(); if(!audioOn()) return;
+  step=step||0.24;
+  var t0=actx.currentTime+0.08;
+  keys.forEach(function(i,j){
+    note(i,t0+j*step,0.6);
+    if(showNow) seqTimers.push(setTimeout(function(){
+      K.forEach(function(k){k.g.classList.remove('now')}); if(K[i]) K[i].g.classList.add('now');
+    },(0.08+j*step)*1000));
+  });
+  if(showNow) seqTimers.push(setTimeout(function(){K.forEach(function(k){k.g.classList.remove('now')})},(0.08+keys.length*step+0.2)*1000));
+}
+function scaleKeys(pc,sc,down){
+  var up=sc.semis.concat(12).map(function(s){return pc+s});
+  return down?up.concat(up.slice(0,-1).reverse()):up;
+}
+
+/* ---------- Explorador ---------- */
+function showEx(){
+  var sc=S[ex.sk];
+  if(ex.free){ resetKeys(); K[ex.pc].g.classList.add('root'); }
+  else showScale(ex.pc,sc,ex.lab);
+}
+function setEx(o){
+  stopSeq(); Object.assign(ex,o);
+  save('ee.ex.v1',{pc:ex.pc,sk:ex.sk,lab:ex.lab});
+  showEx(); paintStudy();
+}
+var libOpen=window.matchMedia&&window.matchMedia('(min-width:880px)').matches;
+function paintStudy(){
+  var box=$('studyBody'), sc=S[ex.sk], sp=spell(ex.pc,sc);
+  $('studyTitle').textContent=fullName(ex.pc,sc);
+  box.innerHTML='';
+  box.appendChild(mk('p','notes',ex.free?'¿Cuáles son sus notas?':sp.map(nm).join('  ')));
+  var f=mk('p','formula');
+  f.innerHTML='Fórmula <b></b> · Pasos <b></b>';
+  f.querySelectorAll('b')[0].textContent=sc.f.map(degStr).join(' ');
+  f.querySelectorAll('b')[1].textContent=stepsStr(sc);
+  box.appendChild(f);
+  box.appendChild(mk('p','',sc.how));
+  var extra=sc.mood+' '+sc.ex+'.';
+  if(sc.m&&!ex.free) extra='Mismas notas que '+parentName(ex.pc,sc)+' mayor, empezando en su '+ORD[sc.m]+' grado. '+extra;
+  box.appendChild(mk('p','hint',extra));
+
+  var row=mk('div','row-btns');
+  var b1=mk('button','ghost','Escuchar'); b1.type='button';
+  b1.addEventListener('click',function(){ withAudio(function(){ playKeys(scaleKeys(ex.pc,sc,true),!ex.free); }); });
+  var b2=mk('button','ghost','+5ª'); b2.type='button'; b2.setAttribute('aria-label','Subir una quinta');
+  b2.addEventListener('click',function(){ setEx({pc:(ex.pc+7)%12}); });
+  var b3=mk('button','ghost','Prueba libre'); b3.type='button'; b3.setAttribute('aria-pressed',String(!!ex.free));
+  b3.addEventListener('click',function(){ setEx({free:!ex.free}); });
+  row.appendChild(b1);row.appendChild(b2);row.appendChild(b3); box.appendChild(row);
+  if(ex.free) box.appendChild(mk('p','hint','Toca la escala de memoria desde la tónica marcada. Lo que pertenece se enciende; lo que no, parpadea en rojo.'));
+  else{
+    var fl=mk('div','field'); fl.appendChild(mk('span','lab','En las teclas'));
+    var seg=mk('div','seg');
+    [['n','Notas'],['d','Grados']].forEach(function(o){
+      var b=mk('button','',o[1]); b.type='button'; b.setAttribute('aria-pressed',String(ex.lab===o[0]));
+      b.addEventListener('click',function(){ setEx({lab:o[0]}); });
+      seg.appendChild(b);
+    });
+    fl.appendChild(seg); box.appendChild(fl);
+  }
+  var roots=mk('div','roots');
+  for(var p=0;p<12;p++){
+    (function(p){
+      var b=mk('button','',rootName(p,sc)); b.type='button'; b.setAttribute('aria-pressed',String(p===ex.pc));
+      b.addEventListener('click',function(){ setEx({pc:p}); });
+      roots.appendChild(b);
+    })(p);
+  }
+  box.appendChild(roots);
+  var det=document.createElement('details'); det.open=libOpen;
+  det.addEventListener('toggle',function(){libOpen=det.open});
+  var sm=mk('summary','hint','Todas las escalas ('+SCALES.length+')'); sm.style.cursor='pointer'; sm.style.padding='4px 0';
+  det.appendChild(sm);
+  GROUPS.forEach(function(g){
+    det.appendChild(mk('p','grp',g[1]));
+    var chips=mk('div','multi');
+    SCALES.forEach(function(x){
+      if(x.g!==g[0]) return;
+      var b=mk('button','',x.name); b.type='button'; b.setAttribute('aria-pressed',String(x.k===ex.sk));
+      b.addEventListener('click',function(){ setEx({sk:x.k}); });
+      chips.appendChild(b);
+    });
+    det.appendChild(chips);
+  });
+  box.appendChild(det);
+}
+
+/* ---------- Ajustes ---------- */
+function syncSettings(){
+  document.querySelectorAll('.seg[data-key]').forEach(function(seg){
+    var key=seg.getAttribute('data-key');
+    seg.querySelectorAll('button').forEach(function(b){
+      b.setAttribute('aria-pressed',String(b.getAttribute('data-val')===String(settings[key])));
+    });
+  });
+  document.querySelectorAll('#kinds button').forEach(function(b){
+    b.setAttribute('aria-pressed',String(settings.kinds.indexOf(b.getAttribute('data-val'))>-1));
+  });
+  document.querySelectorAll('#groups button').forEach(function(b){
+    b.setAttribute('aria-pressed',String(settings.groups.indexOf(b.getAttribute('data-val'))>-1));
+  });
+  $('qOut').textContent=settings.num;
+  $('tOut').textContent=settings.time?settings.time+' s':'Sin límite';
+  $('udToggle').checked=settings.updown;
+  $('namesToggle').checked=settings.names;
+  $('retryToggle').checked=settings.retry;
+  $('soundToggle').checked=settings.sound;
+  $('bestScore').textContent=best.toLocaleString('es-ES');
+  save('ee.settings.v1',settings);
+}
+function weakList(){
+  return Object.keys(stats).filter(function(id){return /^(sc|r):/.test(id)&&stats[id].score>=2})
+    .sort(function(a,b){return stats[b].score-stats[a].score});
+}
+function paintWeak(boxId,hintId){
+  var box=$(boxId), list=weakList();
+  box.innerHTML='';
+  list.forEach(function(id){ var s=stats[id]; box.appendChild(chip(id,(s.n-s.ok)+' fallos')); });
+  var played=Object.keys(stats).some(function(k){return stats[k].n>0});
+  $(hintId).textContent=list.length
+    ? 'Aparecen más a menudo hasta que las aciertes varias veces seguidas.'
+    : (played?'Nada pendiente. Añade una familia de escalas o baja el tiempo máximo.'
+             :'Todavía no hay datos. Juega una ronda y la app recordará las escalas y tonalidades que más te cuestan.');
+}
+function paintHeat(){
+  var box=$('heat'); box.innerHTML='';
+  box.appendChild(mk('span','h',''));
+  for(var p=0;p<12;p++) box.appendChild(mk('span','h',rootName(p)));
+  SCALES.forEach(function(sc){
+    box.appendChild(mk('span','n',sc.name));
+    for(var p=0;p<12;p++){
+      (function(p){
+        var b=mk('button'); b.type='button';
+        b.style.setProperty('--m',MCOL[mastery(sc.k,p)]);
+        b.setAttribute('aria-label',fullName(p,sc));
+        b.addEventListener('click',function(){ setEx({pc:p,sk:sc.k,free:false}); window.scrollTo(0,0); });
+        box.appendChild(b);
+      })(p);
+    }
+  });
+}
+function refreshAll(){
+  syncSettings(); paintWeak('weakChips','weakHint'); paintProgress(); paintHeat();
+  if(document.body.getAttribute('data-view')!=='play'){ showEx(); paintStudy(); }
+}
+
+/* ---------- Juego ---------- */
+var G=null, nextTimer=0, raf=0, lastView='setup';
+function setView(v){ document.body.setAttribute('data-view',v); }
+function hud(){
+  $('hudQ').textContent=Math.min(G.i+1,G.total)+'/'+G.total;
+  $('hudPts').textContent=G.pts.toLocaleString('es-ES');
+  $('hudStreak').textContent=G.streak;
+}
+function pool(){ return SCALES.filter(function(s){return settings.groups.indexOf(s.g)>-1}); }
+function poolFor(kind){
+  var p=pool();
+  if(kind==='char') return p.filter(function(s){return s.ch&&s.ch.length===1});
+  if(kind==='parent') return p.filter(function(s){return !!s.m});
+  return p;
+}
+function pickW(items,idOf){
+  var total=0, ws=items.map(function(x){var w=1+1.7*st(idOf(x)).score; total+=w; return w});
+  var r=Math.random()*total;
+  for(var i=0;i<items.length;i++){ r-=ws[i]; if(r<=0) return items[i]; }
+  return items[items.length-1];
+}
+function pcsKey(sc){return sc.semis.join(',')}
+function newQuestion(){
+  var can=settings.sound&&actx;
+  var kinds=settings.kinds.filter(function(k){return (k!=='ear'||can)&&poolFor(k).length>0});
+  if(!kinds.length) kinds=['play'];
+  var kind=kinds[rnd(kinds.length)], p=poolFor(kind);
+  var roots=settings.roots==='nat'?[0,2,4,5,7,9,11]:[0,1,2,3,4,5,6,7,8,9,10,11];
+  var sc, pc;
+  for(var t=0;t<8;t++){
+    sc=pickW(p,function(s){return 'sc:'+s.k});
+    pc=pickW(roots,function(r){return 'r:'+r});
+    if(sc.k+':'+pc!==G.lastCombo) break;
+  }
+  var q={kind:kind,sk:sc.k,pc:pc}, sp=spell(pc,sc), n=sc.semis.length, i;
+  if(kind==='find'){
+    q.di=1+rnd(n-1); q.ans=sp[q.di].pc;
+  }else if(kind==='char'){
+    q.di=sc.f.indexOf(sc.ch[0]); q.ans=sp[q.di].pc;
+  }else if(kind==='odd'){
+    for(t=0;t<40;t++){
+      i=1+rnd(n-1); var v=sc.semis[i]+(rnd(2)?1:-1);
+      if(v>0&&v<12&&sc.semis.indexOf(v)<0){ q.oddI=i; q.oddSemi=v; break; }
+    }
+    if(q.oddSemi===undefined){ q.kind='play'; }
+  }else if(kind==='name'||kind==='ear'){
+    var others=shuffle(p.filter(function(s){return pcsKey(s)!==pcsKey(sc)}));
+    if(others.length<3) others=shuffle(SCALES.filter(function(s){return pcsKey(s)!==pcsKey(sc)}));
+    var seen={}, opts=[sc.k]; seen[pcsKey(sc)]=1;
+    others.forEach(function(s){ if(opts.length<4&&!seen[pcsKey(s)]){ seen[pcsKey(s)]=1; opts.push(s.k); } });
+    q.opts=shuffle(opts); q.answer=sc.k;
+  }else if(kind==='parent'){
+    var ans=(pc-sc.m+12)%12, cands=shuffle(sp.filter(function(x){return x.pc!==ans}).map(function(x){return x.pc})).slice(0,3);
+    q.opts=shuffle([ans].concat(cands)); q.answer=ans;
+  }
+  return q;
+}
+function isChoice(k){return k==='name'||k==='ear'||k==='parent'}
+function buildControls(q){
+  var box=$('keys'); box.innerHTML=''; box.className='keys';
+  box.style.display=isChoice(q.kind)?'':'none';
+  $('btnHear').style.display=q.kind==='ear'?'':'none';
+  if(!isChoice(q.kind)) return;
+  var sc=S[q.sk];
+  q.opts.forEach(function(o){
+    var b=mk('button','',q.kind==='parent'?nm(spell(q.pc,sc).filter(function(x){return x.pc===o})[0])+' mayor':S[o].name);
+    b.type='button'; b.setAttribute('data-ans',String(o));
+    b.addEventListener('click',function(){ choose(o); });
+    box.appendChild(b);
+  });
+}
+function startRound(){
+  withAudio(function(){
+    stopSeq();
+    G={i:0,total:settings.num,pts:0,streak:0,top:0,ok:0,sumT:0,lastCombo:null,q:null,locked:true,misses:{},queue:[],extra:0};
+    setView('play'); window.scrollTo(0,0);
+    ask();
+  });
+}
+function prompt(main,sub){ $('pMain').textContent=main; $('pSub').textContent=sub||''; }
+function say(main,sub,cls){
+  $('feedback').className='feedback'+(cls?' '+cls:'');
+  $('fbMain').textContent=main; $('fbSub').textContent=sub||'';
+}
+function ask(){
+  stopSeq(); clearTimeout(nextTimer); cancelAnimationFrame(raf);
+  var q=null, k=-1;
+  for(var j=0;j<G.queue.length;j++){ if(G.queue[j].at<=G.i){k=j;break} }
+  if(k<0&&G.queue.length&&(G.total-G.i)<=G.queue.length) k=0;
+  if(k>=0){ q=G.queue.splice(k,1)[0].q; q.again=true; } else q=newQuestion();
+  var sc=S[q.sk], fn=fullName(q.pc,sc), again=q.again?'Repaso de un fallo reciente · ':'';
+  G.q=q; G.locked=false; G.lastCombo=q.sk+':'+q.pc;
+  resetKeys(); buildControls(q); hud(); say('','');
+  if(q.kind==='play'){
+    q.seq=scaleKeys(q.pc,sc,settings.updown); q.pos=0; q.err=0;
+    K[q.pc].g.classList.add('root');
+    prompt(fn,again+(settings.updown?'Tócala subiendo y bajando desde la tónica marcada.':'Tócala subiendo desde la tónica marcada hasta su octava.'));
+  }else if(q.kind==='find'){
+    K[q.pc].g.classList.add('root');
+    prompt('El '+degStr(sc.f[q.di])+' de '+fn,again+'Toca esa nota en el piano.');
+  }else if(q.kind==='char'){
+    K[q.pc].g.classList.add('root');
+    prompt(fn,again+'Toca la nota que lo distingue de '+S[sc.ref].short+'.');
+  }else if(q.kind==='odd'){
+    sc.semis.concat(12).forEach(function(s,i){ light(q.pc+(i===q.oddI?q.oddSemi:s),'#b9b2d6',''); });
+    K[q.pc].g.classList.add('root');
+    prompt(fn,again+'Hay una nota intrusa. Tócala.');
+  }else if(q.kind==='name'){
+    sc.semis.concat(12).forEach(function(s){ light(q.pc+s,'#b9b2d6',''); });
+    K[q.pc].g.classList.add('root');
+    prompt('¿Qué escala es?',again+'Tónica: '+rootName(q.pc,sc));
+  }else if(q.kind==='parent'){
+    prompt(fn,again+'¿De qué escala mayor salen sus notas?');
+  }else{
+    K[q.pc].g.classList.add('root');
+    prompt('¿Qué escala suena?',again+'Tónica: '+rootName(q.pc,sc));
+    playKeys(scaleKeys(q.pc,sc,false),false,0.3);
+  }
+  G.lim=settings.time?settings.time*((q.kind==='play'||q.kind==='ear')?2:1)*(q.kind==='play'&&settings.updown?1.6:1):0;
+  G.t0=performance.now();
+  $('tbar').style.width='100%';
+  raf=requestAnimationFrame(tick);
+}
+function tick(){
+  if(!G||G.locked) return;
+  var e=(performance.now()-G.t0)/1000;
+  if(G.lim){
+    var left=G.lim-e;
+    $('tbar').style.width=Math.max(0,100*left/G.lim).toFixed(1)+'%';
+    $('hudT').textContent=Math.max(0,Math.ceil(left));
+    if(left<=0){ resolve(false,{timeout:true}); return; }
+  }else $('hudT').textContent=Math.floor(e);
+  raf=requestAnimationFrame(tick);
+}
+function keyTap(i){
+  var v=document.body.getAttribute('data-view');
+  if(v==='help') return;
+  if(v!=='play'){
+    withAudio(function(){ note(i,0,0.7); });
+    if(ex.free){
+      var sc=S[ex.sk], sp=spell(ex.pc,sc), pc=K[i].pc, hit=null;
+      sp.forEach(function(n){ if(n.pc===pc) hit=n; });
+      if(hit) light(i,degColor(hit.off),nm(hit)); else flag(i,'miss',450);
+    }
+    return;
+  }
+  if(!G||G.locked) return;
+  var q=G.q;
+  if(isChoice(q.kind)) return;
+  note(i,0,0.6);
+  if(q.kind==='play'){
+    if(i===q.seq[q.pos]){
+      var s2=S[q.sk], sp2=spell(q.pc,s2), n=null;
+      sp2.forEach(function(x){ if(x.pc===K[i].pc) n=x; });
+      light(i,degColor(n.off),nm(n)); q.pos++;
+      if(q.pos>=q.seq.length) resolve(true,{});
+    }else{
+      q.err++; flag(i,'miss',400);
+      if(q.err>=2) resolve(false,{key:i});
+    }
+  }else if(q.kind==='odd'){
+    resolve(i===q.pc+q.oddSemi,{key:i});
+  }else{
+    resolve(K[i].pc===q.ans,{key:i});
+  }
+}
+function choose(ans){
+  if(!G||G.locked) return;
+  var q=G.q, box=$('keys');
+  box.classList.add('locked');
+  box.querySelectorAll('button').forEach(function(b){
+    var a=b.getAttribute('data-ans');
+    if(a===String(q.answer)) b.classList.add('good'); else if(a===String(ans)) b.classList.add('miss');
+  });
+  resolve(ans===q.answer,{});
+}
+function resolve(good,o){
+  if(!G||G.locked) return;
+  G.locked=true; cancelAnimationFrame(raf); stopSeq();
+  var q=G.q, sc=S[q.sk], sp=spell(q.pc,sc), fn=fullName(q.pc,sc);
+  var e=(performance.now()-G.t0)/1000;
+  upd('sc:'+q.sk,good); upd('r:'+q.pc,good);
+  var x=st('x:'+q.sk+':'+q.pc); x.n++; if(good) x.ok++;
+  /* revelado */
+  showScale(q.pc,sc,'n');
+  if(q.kind==='odd'){ K[q.pc+q.oddSemi].g.classList.add('miss'); setLabel(K[q.pc+q.oddSemi],'✗'); }
+  if(!good&&o.key!==undefined&&!(q.kind==='odd'&&o.key===q.pc+q.oddSemi)) K[o.key].g.classList.add('miss');
+  if(good&&o.key!==undefined&&q.kind!=='odd') K[o.key].g.classList.add('good');
+  if(!good&&(q.kind==='find'||q.kind==='char')) K.forEach(function(k){ if(k.pc===q.ans&&k.i>=q.pc&&k.i<=q.pc+12) k.g.classList.add('good'); });
+  var notes=sp.map(nm).join(' '), sub;
+  if(q.kind==='find') sub='El '+degStr(sc.f[q.di])+' de '+fn+' es '+nm(sp[q.di])+'. Notas: '+notes+'.';
+  else if(q.kind==='char') sub='Lo que lo distingue de '+S[sc.ref].short+' es su '+degStr(sc.f[q.di])+': '+nm(sp[q.di])+'. '+sc.how;
+  else if(q.kind==='odd') sub=fn+': '+notes+'. '+sc.how;
+  else if(q.kind==='parent') sub=fn+' usa las notas de '+parentName(q.pc,sc)+' mayor, empezando en su '+ORD[sc.m]+' grado.';
+  else if(q.kind==='name'||q.kind==='ear') sub=fn+': '+notes+'. '+sc.how;
+  else sub=notes+' · '+sc.how;
+  var d=today(); d.q++;
+  if(good){
+    d.ok++; d.sumT+=e; d.nT++; G.ok++; G.sumT+=e; G.streak++; G.top=Math.max(G.top,G.streak);
+    var ref=G.lim||30, gain=100+Math.round(100*Math.max(0,1-e/ref))+10*Math.min(G.streak,10);
+    if(q.kind==='play'&&q.err) gain=Math.max(50,gain-60);
+    G.pts+=gain;
+    say((q.kind==='play'&&q.err?'Bien, con un tropiezo':e<ref*0.35?'¡Al vuelo!':'Correcto')+' · +'+gain,sub,'good');
+  }else{
+    G.streak=0;
+    G.misses['sc:'+q.sk]=(G.misses['sc:'+q.sk]||0)+1;
+    say(o.timeout?'Se acabó el tiempo':(q.kind==='play'?'Dos tropiezos':'No era esa'),sub,'miss');
+  }
+  if(q.kind==='ear'||(!good&&q.kind==='play')) playKeys(scaleKeys(q.pc,sc,false),true,0.2);
+  G.i++;
+  if(!good&&settings.retry){
+    var copy={kind:q.kind,sk:q.sk,pc:q.pc,di:q.di,ans:q.ans,oddI:q.oddI,oddSemi:q.oddSemi,opts:q.opts,answer:q.answer};
+    G.queue.push({at:G.i+1+rnd(2),q:copy});
+  }
+  save('ee.stats.v1',stats); save('ee.days.v1',days);
+  hud(); $('hudQ').textContent=G.i+'/'+G.total;
+  clearTimeout(nextTimer);
+  nextTimer=setTimeout(function(){
+    if(!G) return;
+    if(G.i>=G.total){
+      if(G.queue.length&&G.extra<3){ G.total++; G.extra++; ask(); }
+      else finish();
+    }else ask();
+  },good?1500:3600);
+}
+function finish(){
+  var g=G; G=null; stopSeq(); cancelAnimationFrame(raf);
+  if(g.pts>best){best=g.pts;save('ee.best.v1',best)}
+  today().rounds++; save('ee.days.v1',days);
+  setView('results'); refreshAll();
+  var asked=g.i, pct=g.ok/asked;
+  $('verdict').textContent=pct===1?'Ronda redonda. Baja el tiempo o añade una familia de escalas.'
+    :pct>=0.8?'Muy bien. Quedan un par de escalas por asentar.'
+    :pct>=0.5?'Vas viendo las formas. Lo fallado volverá pronto.'
+    :'Ronda dura. Pasa un rato por el explorador con «Prueba libre» y vuelve.';
+  $('rPts').textContent=g.pts.toLocaleString('es-ES');
+  $('rOk').textContent=g.ok+'/'+asked;
+  $('rAvg').textContent=g.ok?(g.sumT/g.ok).toFixed(1).replace('.',',')+' s':'–';
+  $('rStreak').textContent=g.top;
+  var box=$('rMiss'); box.innerHTML='';
+  var ids=Object.keys(g.misses).sort(function(a,b){return g.misses[b]-g.misses[a]});
+  ids.forEach(function(id){box.appendChild(chip(id,'×'+g.misses[id]))});
+  $('rMissHint').textContent=ids.length?'':'Ninguno. Todo a la primera.';
+  paintWeak('rWeak','rWeakHint');
+  window.scrollTo(0,0);
+}
+function quit(){
+  G=null; stopSeq(); clearTimeout(nextTimer); cancelAnimationFrame(raf);
+  setView('setup'); refreshAll();
+}
+
+/* ---------- Copia de seguridad ---------- */
+function backupCode(){
+  var json=JSON.stringify({v:1,stats:stats,days:days,best:best,settings:settings,ex:{pc:ex.pc,sk:ex.sk,lab:ex.lab}});
+  return 'EE1:'+btoa(unescape(encodeURIComponent(json)));
+}
+function restore(code){
+  code=(code||'').trim();
+  if(code.indexOf('EE1:')!==0) throw new Error('formato');
+  var o=JSON.parse(decodeURIComponent(escape(atob(code.slice(4)))));
+  if(!o||typeof o.stats!=='object'||typeof o.days!=='object') throw new Error('contenido');
+  save('ee.stats.v1',o.stats); save('ee.days.v1',o.days); save('ee.best.v1',+o.best||0);
+  if(o.settings&&typeof o.settings==='object') save('ee.settings.v1',o.settings);
+  if(o.ex&&typeof o.ex==='object') save('ee.ex.v1',o.ex);
+  spellCache={}; loadAll();
+}
+
+/* ---------- Eventos ---------- */
+function wire(){
+  var gb=$('groups');
+  GROUPS.forEach(function(g){ var b=mk('button','',g[1]); b.type='button'; b.setAttribute('data-val',g[0]); gb.appendChild(b); });
+  function multi(boxId,key){
+    $(boxId).addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return;
+      var v=b.getAttribute('data-val'), arr=settings[key], i=arr.indexOf(v);
+      if(i>-1){ if(arr.length>1) arr.splice(i,1); } else arr.push(v);
+      syncSettings();
+    });
+  }
+  multi('groups','groups'); multi('kinds','kinds');
+  document.querySelectorAll('.seg[data-key]').forEach(function(seg){
+    seg.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b) return;
+      settings[seg.getAttribute('data-key')]=b.getAttribute('data-val'); refreshAll();
+    });
+  });
+  $('qMinus').addEventListener('click',function(){settings.num=Math.max(5,settings.num-5);syncSettings()});
+  $('qPlus').addEventListener('click',function(){settings.num=Math.min(40,settings.num+5);syncSettings()});
+  $('tMinus').addEventListener('click',function(){settings.time=settings.time===0?60:Math.max(5,settings.time-5);syncSettings()});
+  $('tPlus').addEventListener('click',function(){settings.time=settings.time===0?0:(settings.time>=60?0:settings.time+5);syncSettings()});
+  $('udToggle').addEventListener('change',function(e){settings.updown=e.target.checked;syncSettings()});
+  $('namesToggle').addEventListener('change',function(e){settings.names=e.target.checked;refreshAll()});
+  $('retryToggle').addEventListener('change',function(e){settings.retry=e.target.checked;syncSettings()});
+  $('soundToggle').addEventListener('change',function(e){settings.sound=e.target.checked; if(!settings.sound) stopSeq(); syncSettings(); initAudio();});
+  $('btnStart').addEventListener('click',startRound);
+  $('btnAgain').addEventListener('click',startRound);
+  $('btnQuit').addEventListener('click',quit);
+  $('btnSetup').addEventListener('click',quit);
+  $('btnHear').addEventListener('click',function(){
+    if(G&&!G.locked&&G.q.kind==='ear') withAudio(function(){ if(G&&!G.locked) playKeys(scaleKeys(G.q.pc,S[G.q.sk],false),false,0.3); });
+  });
+  $('btnHelp').addEventListener('click',function(){
+    var v=document.body.getAttribute('data-view'); if(v==='play'||v==='help') return;
+    lastView=v; stopSeq(); setView('help'); window.scrollTo(0,0);
+  });
+  $('btnHelpBack').addEventListener('click',function(){ setView(lastView==='results'?'results':'setup'); window.scrollTo(0,0); });
+  var armed=0, rb=$('btnReset');
+  rb.addEventListener('click',function(){
+    if(armed){ clearTimeout(armed); armed=0; stats={}; save('ee.stats.v1',stats); rb.textContent='Borrar memoria'; refreshAll(); return; }
+    rb.textContent='Toca otra vez para confirmar';
+    armed=setTimeout(function(){armed=0; rb.textContent='Borrar memoria'},3000);
+  });
+  var msg=$('bkMsg'), area=$('bkArea');
+  $('btnExport').addEventListener('click',function(){
+    area.value=backupCode(); area.focus(); area.select();
+    msg.textContent='Código creado. Cópialo y guárdalo en Notas o envíatelo.';
+    try{ navigator.clipboard.writeText(area.value).then(function(){msg.textContent='Código creado y copiado al portapapeles.'}).catch(function(){}); }catch(e){}
+  });
+  $('btnImport').addEventListener('click',function(){
+    if(!area.value.trim()){ msg.textContent='Pega primero el código en el recuadro.'; return; }
+    try{ restore(area.value); area.value=''; refreshAll(); msg.textContent='Progreso restaurado.'; }
+    catch(e){ msg.textContent='Ese código no es válido. Comprueba que lo has pegado entero, empezando por EE1:'; }
+  });
+}
+function wireFullscreen(){
+  var root=document.documentElement, b=$('btnFs');
+  var req=root.requestFullscreen||root.webkitRequestFullscreen;
+  var enabled=document.fullscreenEnabled||document.webkitFullscreenEnabled;
+  if(!req||!enabled) return;
+  b.hidden=false;
+  function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement)}
+  function paint(){b.textContent=isFs()?'Salir de pantalla completa':'Pantalla completa'}
+  b.addEventListener('click',function(){
+    try{
+      var r=isFs()?(document.exitFullscreen||document.webkitExitFullscreen).call(document):req.call(root);
+      if(r&&r.catch) r.catch(function(){b.textContent='No disponible aquí'});
+    }catch(e){b.textContent='No disponible aquí'}
+  });
+  document.addEventListener('fullscreenchange',paint);
+  document.addEventListener('webkitfullscreenchange',paint);
+}
+buildPiano(); wire(); wireFullscreen(); refreshAll();
+if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){} }
+})();
+</script>
+</body>
+</html>

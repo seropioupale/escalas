@@ -1,0 +1,89 @@
+ENTRENADOR DE ESCALAS — AYUDA Y REGISTRO DE CAMBIOS
+====================================================
+
+LA IDEA
+-------
+El objetivo es que al pensar «Re dórico» veas las teclas encendidas en tu
+cabeza antes de tocar. La app trabaja tres cosas: la FORMA de la escala
+sobre el teclado, su FÓRMULA de grados y la NOTA que la distingue de una
+escala que ya conoces.
+
+El truco más rápido: no memorices 21 escalas. Memoriza dos (mayor y menor
+natural) y aprende qué nota cambia en cada una de las demás.
+  Dórico    = menor con la 6 mayor      Lidio     = mayor con #4
+  Frigio    = menor con b2              Mixolidio = mayor con b7
+  Locrio    = frigio con b5             Armónica  = menor con 7 mayor
+
+EL EXPLORADOR (pantalla principal, fuera de la ronda)
+-----------------------------------------------------
+- Elige tónica y escala: se enciende en el piano, cada grado de un color y
+  la tónica en dorado. Debajo: notas, fórmula, pasos (T = tono,
+  S = semitono, T½ = tono y medio), carácter y un ejemplo conocido.
+- Notas / Grados: cambia lo que se escribe en las teclas.
+- Escuchar: suena la escala subiendo y bajando.
+- +5ª: lleva la misma escala a la siguiente tonalidad del círculo de
+  quintas. Recorre las doce sin saltarte ninguna.
+- Prueba libre: apaga las teclas y deja solo la tónica. Toca de memoria:
+  lo correcto se enciende, lo que no pertenece parpadea en rojo.
+
+ESCALAS INCLUIDAS (21)
+----------------------
+Básicas:        mayor (jónico), menor natural (eólico)
+Pentatónicas:   pentatónica mayor, pentatónica menor, blues, blues mayor
+Modos:          dórico, frigio, lidio, mixolidio, locrio
+Menores:        menor armónica, menor melódica
+Jazz/exóticas:  frigio dominante, lidio dominante, alterada, tonos
+                enteros, disminuida tono–semitono, disminuida
+                semitono–tono, doble armónica, húngara menor
+
+TIPOS DE EJERCICIO
+------------------
+- Tocar: te dan tónica y escala y la tocas subiendo desde la tecla marcada
+  hasta la octava. Un tropiezo se perdona; dos, no.
+- Grados: «El b7 de Re dórico»: tocas esa nota.
+- Nota característica: tocas la nota que distingue a la escala de su
+  escala de referencia.
+- Intrusa: el piano muestra la escala con una nota equivocada. Tócala.
+- ¿Qué escala es?: ves las teclas encendidas y eliges el nombre.
+- Escala madre: «¿De qué escala mayor salen las notas de Mi frigio?»
+- Oído: suena la escala y eliges cuál es (necesita sonido).
+
+AJUSTES
+-------
+- Notación americana (C D E) o europea (Do Re Mi).
+- Familias de escalas que entran en la ronda.
+- Tonalidades: solo teclas blancas o las 12.
+- Número de preguntas (5 a 40) y tiempo máximo (5 a 60 s, o sin límite).
+  «Tocar» y «Oído» tienen el doble de tiempo.
+- Subir y bajar: en «Tocar», la escala se toca de ida y vuelta.
+- Nombres en las teclas: ayuda para empezar. Apágalo en cuanto puedas.
+- Reintento inmediato: lo fallado vuelve dos o tres preguntas después.
+
+PUNTOS, MEMORIA Y DOMINIO
+-------------------------
+- Acierto: 100 puntos + hasta 100 por rapidez + 10 por acierto seguido.
+- La app recuerda las escalas y tonalidades que fallas y las pregunta más
+  a menudo hasta que las aciertes varias veces.
+- «Tu dominio»: mapa de las 21 escalas en las 12 tonalidades (verde,
+  ámbar, rojo). Toca una casilla para verla en el piano.
+- «Tu progreso»: racha de días y segundos por acierto de la última semana.
+- Todo se guarda en el dispositivo. «Copia de seguridad» crea un código
+  para llevar el progreso a otro.
+
+PLAN RECOMENDADO
+----------------
+1. «Básicas» en teclas blancas hasta ver el mapa en verde; luego «Las 12».
+2. Añade una familia cada vez. Los modos, comparándolos con mayor o menor.
+3. Diez minutos al día. Cuando una ronda salga redonda, baja el tiempo.
+
+SONIDO
+------
+En iPhone, el interruptor de silencio apaga el sonido de la app.
+
+REGISTRO DE CAMBIOS
+-------------------
+v1.0 (11-11-2026)
+- Primera versión: explorador con piano de dos octavas, 21 escalas,
+  7 tipos de ejercicio, memoria de repaso, mapa de dominio, progreso por
+  días, copia de seguridad y pantalla completa.
+- Versión instalable: icono propio, modo app y uso sin conexión.
