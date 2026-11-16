@@ -468,6 +468,7 @@ header.top{flex-wrap:wrap}
           <li>Diez minutos al día rinden más que una hora a la semana. Cuando una ronda salga redonda, baja el tiempo máximo.</li>
         </ul>
         <p>Todo se guarda en este dispositivo. Usa «Copia de seguridad» para llevar tu progreso a otro. En iPhone, el interruptor de silencio apaga el sonido.</p>
+        <p class="hint">Piano: muestras Salamander Grand Piano (Yamaha C5) de Alexander Holm, licencia CC BY 3.0.</p>
       </div>
     </section>
 
@@ -509,7 +510,7 @@ header.top{flex-wrap:wrap}
       </div>
       <button class="cta" id="btnAgain">Otra ronda</button>
     </section>
-    <p class="ver">Versión 1.1</p>
+    <p class="ver">Versión 1.2</p>
   </div>
 </main>
 
@@ -869,6 +870,7 @@ function initAudio(){
       actx=new AC(); master=actx.createGain(); master.gain.value=0.8; master.connect(actx.destination);
       newBus();
     }
+    loadSamples();
     if(actx.state!=='running') actx.resume();
   }catch(e){actx=null}
 }
@@ -890,6 +892,7 @@ function note(i,t,dur){
   if(!audioOn()) return;
   try{
     t=Math.max(t||0,actx.currentTime); dur=dur||0.7;
+    if(playSample(48+i,t,dur,0.32)) return;
     var f=440*Math.pow(2,(48+i-69)/12), g=actx.createGain();
     g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.32,t+0.008);
     g.gain.exponentialRampToValueAtTime(0.001,t+dur); g.connect(bus);
@@ -897,6 +900,31 @@ function note(i,t,dur){
     var g2=actx.createGain(); g2.gain.value=0.25; g2.connect(g);
     var o2=actx.createOscillator(); o2.type='sine'; o2.frequency.value=f*2; o2.connect(g2); o2.start(t); o2.stop(t+dur+0.05);
   }catch(e){}
+}
+/* ---------- Muestras de piano: Salamander Grand Piano (Yamaha C5), de Alexander Holm, CC BY 3.0 ---------- */
+var SAMPLES={}, sLoading=false;
+var SAMPLE_NOTES=[['C2',36],['Ds2',39],['Fs2',42],['A2',45],['C3',48],['Ds3',51],['Fs3',54],['A3',57],['C4',60],['Ds4',63],['Fs4',66],['A4',69],['C5',72]];
+function loadSamples(){
+  if(sLoading||!actx||!window.fetch) return; sLoading=true;
+  SAMPLE_NOTES.forEach(function(n){
+    try{
+      fetch('piano/'+n[0]+'.mp3').then(function(r){ if(!r.ok) throw 0; return r.arrayBuffer(); })
+      .then(function(buf){ actx.decodeAudioData(buf,function(b){ SAMPLES[n[1]]=b; },function(){}); })
+      .catch(function(){});
+    }catch(e){}
+  });
+}
+function playSample(m,t,dur,vol){
+  var best=null;
+  for(var k in SAMPLES){ var kn=+k; if(best===null||Math.abs(kn-m)<Math.abs(best-m)) best=kn; }
+  if(best===null||Math.abs(best-m)>12) return false;
+  try{
+    var src=actx.createBufferSource(), g=actx.createGain(), v=Math.min(0.95,vol*2.4), hold=Math.max(0.15,dur);
+    src.buffer=SAMPLES[best]; src.playbackRate.value=Math.pow(2,(m-best)/12);
+    g.gain.setValueAtTime(v,t); g.gain.setValueAtTime(v,t+hold); g.gain.exponentialRampToValueAtTime(0.001,t+hold+0.7);
+    src.connect(g); g.connect(bus); src.start(t); src.stop(t+hold+0.75);
+    return true;
+  }catch(e){ return false; }
 }
 function stopSeq(){
   seqTimers.forEach(clearTimeout); seqTimers=[];

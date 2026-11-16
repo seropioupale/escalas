@@ -103,8 +103,18 @@ SONIDO
 ------
 En iPhone, el interruptor de silencio apaga el sonido de la app.
 
+CRÉDITOS DEL SONIDO
+-------------------
+Piano: muestras Salamander Grand Piano (Yamaha C5) de Alexander Holm,
+licencia CC BY 3.0. Se descargan la primera vez (algo más de 1 MB) y
+quedan guardadas para usar la app sin conexión. Mientras cargan, suena un
+tono sintético sencillo.
+
 REGISTRO DE CAMBIOS
 -------------------
+v1.2 (16-11-2026)
+- Sonido de piano de cola real (las mismas muestras que Quintas).
+
 v1.1 (16-11-2026)
 - Diseño horizontal: teclado a todo lo ancho, con la pregunta arriba.
 - Pregunta y corrección con letra más grande y más contraste.
