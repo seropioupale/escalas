@@ -46,7 +46,30 @@ TIPOS DE EJERCICIO
 - Intrusa: el piano muestra la escala con una nota equivocada. Tócala.
 - ¿Qué escala es?: ves las teclas encendidas y eliges el nombre.
 - Escala madre: «¿De qué escala mayor salen las notas de Mi frigio?»
-- Oído: suena la escala y eliges cuál es (necesita sonido).
+- Escala de oído: suena la escala y eliges cuál es (necesita sonido).
+
+EJERCICIOS QUE SE DESBLOQUEAN
+-----------------------------
+Empiezas con tres tipos de ejercicio (Tocar, Grados y ¿Qué escala es?).
+Cada 15 aciertos se desbloquea uno nuevo, se activa solo y se anuncia al
+acabar la ronda. En los ajustes, «Desbloquear todos ahora» los abre todos.
+Orden: Nota característica, Intrusa, Escala madre, Escala de oído y:
+- Nota siguiente: «En Si bemol mixolidio, ¿qué va después de Mi bemol?».
+  La tocas. A veces pregunta por la de antes.
+- Tocar bajando: la escala desde la octava hasta la tónica.
+- Notas que faltan: el piano muestra la escala con huecos y tocas lo que
+  falta.
+- Tonos y semitonos: eliges el patrón de pasos de una escala.
+- ¿Qué modo es?: «Notas de Sol mayor desde La»: eliges el modo.
+- Desde otro grado: tocas la escala empezando por uno de sus grados.
+- Alteraciones: «¿Cuántas alteraciones tiene Re dórico?».
+- Grado de oído: suena la escala y luego una nota; dices qué grado es.
+
+EN HORIZONTAL
+-------------
+Gira el móvil durante la ronda: el teclado ocupa todo el ancho de abajo y
+las teclas se hacen el doble de grandes. La pregunta, las respuestas y la
+corrección quedan en la franja de arriba, sin tapar nunca el teclado.
 
 AJUSTES
 -------
@@ -82,6 +105,12 @@ En iPhone, el interruptor de silencio apaga el sonido de la app.
 
 REGISTRO DE CAMBIOS
 -------------------
+v1.1 (16-11-2026)
+- Diseño horizontal: teclado a todo lo ancho, con la pregunta arriba.
+- Pregunta y corrección con letra más grande y más contraste.
+- 8 ejercicios nuevos (15 en total) y desbloqueo progresivo.
+- Teclas que responden visualmente al pulsarlas.
+
 v1.0 (11-11-2026)
 - Primera versión: explorador con piano de dos octavas, 21 escalas,
   7 tipos de ejercicio, memoria de repaso, mapa de dominio, progreso por
