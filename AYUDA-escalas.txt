@@ -88,6 +88,26 @@ Método recomendado (5 minutos): 1 min con guía «Siempre», 2 min con
 «Desvanecer» y 2 min «Sin guía». Al día siguiente, la misma escala una
 quinta más arriba (botón +5ª).
 
+HOJA DE PRÁCTICA EN PDF
+-----------------------
+En el explorador, debajo de la escala elegida: «Crear PDF». Dos páginas
+por escala, pensadas para practicar al piano o escribir encima en GoodNotes:
+- Página 1: teclado de dos octavas con la digitación de la MD (arriba) y
+  la MI (abajo). El pulgar va en negro y cada cruce se marca con un arco
+  naranja. Debajo, cómo se mueve cada mano: hacia qué notas pasa el pulgar
+  por debajo, qué dedo cruza por encima al bajar y el dedo de referencia
+  (normalmente el 4). Las posiciones de cada mano para tocarlas como
+  acordes y grabarte el dibujo, dónde coinciden los pulgares, una rutina
+  con casillas y un registro semanal.
+- Página 2: partitura subiendo y bajando dos octavas, con la digitación
+  encima (MD) y debajo (MI), y espacio para notas.
+«Las 12 tonalidades» crea un cuadernillo con la misma escala en todo el
+círculo de quintas (24 páginas). «Enviar a…» la manda a GoodNotes o
+Archivos; «Descargar» la guarda.
+La digitación de las escalas mayores y menores armónicas es la estándar;
+en el resto se calcula con las mismas reglas (pulgar en teclas blancas,
+grupos de 3 y 4 dedos). Es orientativa.
+
 EN HORIZONTAL
 -------------
 Gira el móvil durante la ronda: el teclado ocupa todo el ancho de abajo y
@@ -135,6 +155,10 @@ tono sintético sencillo.
 
 REGISTRO DE CAMBIOS
 -------------------
+v1.5 (17-11-2026)
+- Hoja de práctica en PDF por escala (o las 12 tonalidades): digitación de
+  las dos manos, movimiento de la mano, posiciones, rutina y partitura.
+
 v1.4 (17-11-2026)
 - Modo improvisación: temporizador, verde/rojo por nota, bordón, clic o
   vamp de fondo, guía que se desvanece, retos rotativos, grados tocados y

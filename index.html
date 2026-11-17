@@ -356,6 +356,12 @@ body[data-view="impres"] #impres{display:flex}
   .impcov span{min-width:62px;padding:12px 14px;font-size:22px;border-radius:12px}
   .keys .impend{min-height:58px;font-size:18px}
 }
+
+.pdfres{display:flex;gap:14px;align-items:flex-start;margin-top:10px}
+.pdfres img{width:120px;border-radius:6px;border:1px solid var(--line);background:#fff;flex:none}
+.pdfcol{display:flex;flex-direction:column;gap:8px;flex:1}
+.pdfcol .hint{margin:0}
+@media (pointer:coarse) and (min-width:700px) and (min-height:600px){ .pdfres img{width:170px} }
 </style>
 </head>
 <body data-view="setup">
@@ -552,6 +558,17 @@ body[data-view="impres"] #impres{display:flex}
         <p><b>Método recomendado</b>, unos 5 minutos por escala: una pasada de 1 minuto con guía «Siempre», otra de 2 con «Desvanecer» y otra de 2 «Sin guía». Al día siguiente, la misma escala una 5.ª más arriba (botón +5ª).</p>
       </div>
       <div class="card">
+        <h2>Hoja de práctica en PDF</h2>
+        <p>En el explorador, debajo de la escala elegida, «Crear PDF» prepara una hoja para practicar al piano de verdad: dos páginas por escala.</p>
+        <ul>
+          <li><b>Digitación de las dos manos</b> sobre un teclado de dos octavas: la MD arriba y la MI abajo. El pulgar va en negro y los cruces se marcan con un arco naranja.</li>
+          <li><b>Cómo se mueve la mano</b>: hacia qué notas pasa el pulgar por debajo, qué dedo cruza por encima al bajar y tu dedo de referencia (normalmente el 4).</li>
+          <li><b>Posiciones</b>: los grupos de notas que caen bajo la mano sin moverla. Tócalos como acordes para grabarte el dibujo.</li>
+          <li><b>Rutina y registro</b> con casillas para marcar en GoodNotes, y la <b>partitura</b> subiendo y bajando con la digitación.</li>
+        </ul>
+        <p>«Las 12 tonalidades» crea un cuadernillo con la misma escala en todo el círculo de quintas. Con «Enviar a…» la mandas directamente a GoodNotes o a Archivos.</p>
+      </div>
+      <div class="card">
         <h2>Ejercicios que se desbloquean</h2>
         <p>Empiezas con tres tipos de ejercicio. Cada 15 aciertos se desbloquea uno nuevo, se activa solo y te lo anuncia al acabar la ronda. Si quieres verlos todos ya, en los ajustes tienes «Desbloquear todos ahora».</p>
       </div>
@@ -639,7 +656,7 @@ body[data-view="impres"] #impres{display:flex}
       <div class="row-btns"><button class="ghost" id="btnImpBack" type="button">Volver al explorador</button></div>
       <button class="cta" id="btnImpAgain" type="button">Otra vez</button>
     </section>
-    <p class="ver">Versión 1.4</p>
+    <p class="ver">Versión 1.5</p>
   </div>
 </main>
 
@@ -1370,6 +1387,435 @@ function impSection(box){
   box.appendChild(mk('p','hint',r?'Tu mejor marca en esta escala: '+r.best+' % ('+r.n+(r.n===1?' sesión':' sesiones')+').':'Guía «Desvanecer»: la escala coloreada se va borrando con cada acierto y vuelve un momento con cada error, hasta que la tocas de memoria.'));
 }
 
+/* ---------- Digitación de escalas (para la hoja PDF) ---------- */
+var FBLK={1:1,3:1,6:1,8:1,10:1};
+function fgComps(N){
+  var out=[];
+  (function rec(rem,acc){
+    if(rem===0){ if(acc.length>=2) out.push(acc.slice()); return; }
+    for(var s=4;s>=2;s--) if(s<=rem){ acc.push(s); rec(rem-s,acc); acc.pop(); }
+  })(N,[]);
+  return out;
+}
+/* Devuelve la digitación cíclica de una mano: {f:[dedo por grado], start:[es inicio de grupo], size:[tamaño del grupo], grp:[índice de grupo]} */
+function fgCycle(root,semis,hand){
+  var N=semis.length, pc=semis.map(function(s){return (root+s)%12}), best=null, bp=1e9;
+  function iv(i){ var j=(i+1)%N; return j===0?12-semis[i]+semis[0]:semis[j]-semis[i]; }
+  fgComps(N).forEach(function(comp){
+    for(var r=0;r<N;r++){
+      var f=[],pos=[],size=[],grp=[],p=r;
+      comp.forEach(function(s,g){ for(var k=0;k<s;k++){ var i=(p+k)%N; pos[i]=k; size[i]=s; grp[i]=g; f[i]=hand==='R'?k+1:s-k; } p+=s; });
+      var pen=2.5*(comp.length-2), i;
+      for(i=0;i<N;i++){
+        var thumb=f[i]===1;
+        if(thumb){
+          if(FBLK[pc[i]]) pen+=8;
+          var nb=hand==='R'?(i-1+N)%N:(i+1)%N;
+          if(FBLK[pc[nb]]) pen-=2;
+        }
+        if(size[i]===2&&pos[i]===0) pen+=1.5;
+        var d=iv(i), same=grp[i]===grp[(i+1)%N]&&pos[(i+1)%N]===pos[i]+1;
+        if(d>2) pen+=(d-2)*(same?0.6:1.2);
+      }
+      if(!FBLK[pc[0]]&&f[0]===1){ pen-=4; if(size[0]===3) pen-=1; }
+      if(pen<bp-1e-9){ bp=pen; best={f:f,pos:pos,size:size,grp:grp,pen:pen}; }
+    }
+  });
+  return best;
+}
+/* Secuencia subiendo de n octavas (N*n+1 notas) con los extremos ajustados (5 arriba en la MD, 5 abajo en la MI) */
+function fgSeq(root,semis,hand,oct){
+  var N=semis.length, c=fgCycle(root,semis,hand), out=[], i;
+  for(i=0;i<=N*oct;i++) out.push(c.f[i%N]);
+  if(hand==='R'&&c.f[0]===1) out[N*oct]=Math.min(5,1+c.size[N-1]);
+  if(hand==='L'&&c.f[0]===1) out[0]=Math.min(5,1+c.size[1%N]);
+  return {seq:out,cyc:c};
+}
+/* ---------- Hoja de práctica en PDF ---------- */
+var PW=1654, PH=2339, PM=95;
+var PINK='#1d1930', PGRAY='#6b6680', PLINE='#c9c4d9', PACC='#d9480f';
+var PFH='"Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif';
+var PFB='"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+function pFill(ctx,c,fb){ ctx.fillStyle=fb; ctx.fillStyle=c; }
+function pPastel(off){ var h=((off*51+200)%360); return off===0?'#f6d27a':'hsl('+h+',70%,82%)'; }
+function pDeep(off){ var h=((off*51+200)%360); return off===0?'#e0a92a':'hsl('+h+',55%,62%)'; }
+function pText(ctx,t,x,y,font,col,align){ ctx.font=font; ctx.fillStyle=col||PINK; ctx.textAlign=align||'left'; ctx.textBaseline='alphabetic'; ctx.fillText(t,x,y); return ctx.measureText(t).width; }
+function pWrap(ctx,t,x,y,maxW,lh,font,col){
+  ctx.font=font; ctx.fillStyle=col||PINK; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  var words=t.split(' '), line='';
+  for(var i=0;i<words.length;i++){
+    var test=line?line+' '+words[i]:words[i];
+    if(ctx.measureText(test).width>maxW&&line){ ctx.fillText(line,x,y); y+=lh; line=words[i]; }
+    else line=test;
+  }
+  if(line){ ctx.fillText(line,x,y); y+=lh; }
+  return y;
+}
+function pRound(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function pSection(ctx,t,y){ pText(ctx,t.toUpperCase(),PM,y,'700 24px '+PFB,PGRAY); ctx.strokeStyle=PLINE; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(PM,y+12); ctx.lineTo(PW-PM,y+12); ctx.stroke(); }
+function pList(arr){ if(arr.length<2) return arr.join(''); return arr.slice(0,-1).join(', ')+' y '+arr[arr.length-1]; }
+function pFile(t){ return t.replace(/♯/g,'#').replace(/♭/g,'b').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w #().-]/g,''); }
+
+/* Datos de la hoja: notas, digitaciones y textos */
+function sheetData(pc,sc){
+  var sp=spell(pc,sc), N=sp.length, R=fgSeq(pc,sc.semis,'R',2), L=fgSeq(pc,sc.semis,'L',2);
+  var notes=[], i;
+  for(i=0;i<=2*N;i++){ var d=sp[i%N]; notes.push({s:pc+sc.semis[i%N]+12*Math.floor(i/N),n:d,off:d.off,name:nm(d),rf:R.seq[i],lf:L.seq[i],deg:i%N}); }
+  return {pc:pc,sc:sc,sp:sp,N:N,R:R,L:L,notes:notes};
+}
+function handInfo(D,hand){
+  var c=(hand==='R'?D.R:D.L).cyc, f=c.f, N=D.N, sp=D.sp, i, out=[];
+  var thumbs=[]; for(i=0;i<N;i++) if(f[i]===1) thumbs.push(i);
+  var route=[];
+  for(i=0;i<=N;i++){
+    var dg=i%N, fi=(hand==='R'?D.R:D.L).seq[i];
+    var sq=(hand==='R'?D.R:D.L).seq, cross=i>0&&(hand==='R'?sq[i]===1:sq[i-1]===1);
+    route.push({name:nm(sp[dg]),f:fi,cross:cross});
+  }
+  if(hand==='R'){
+    out.push('Subiendo, el pulgar pasa por debajo hacia '+pList(thumbs.map(function(t){return nm(sp[t])}))+'.');
+    out.push('Bajando, '+pList(thumbs.map(function(t){ var p=(t-1+N)%N; return 'el '+f[p]+' cruza por encima del pulgar de '+nm(sp[t])+' a '+nm(sp[p]); }))+'.');
+  } else {
+    out.push('Subiendo, '+pList(thumbs.map(function(t){ var n=(t+1)%N; return 'el '+f[n]+' cruza por encima del pulgar de '+nm(sp[t])+' a '+nm(sp[n]); }))+'.');
+    out.push('Bajando, el pulgar pasa por debajo hacia '+pList(thumbs.map(function(t){return nm(sp[t])}))+'.');
+  }
+  var mx=Math.max.apply(null,f), lm=[]; for(i=0;i<N;i++) if(f[i]===mx) lm.push(nm(sp[i]));
+  out.push('Tu referencia: el '+mx+' cae en '+pList(lm)+'. Si ese dedo cae en su sitio, todo lo demás encaja.');
+  var seq=(hand==='R'?D.R:D.L).seq;
+  if(hand==='R'&&seq[seq.length-1]!==f[0]) out.push('Arriba del todo terminas con el '+seq[seq.length-1]+' en '+nm(sp[0])+'.');
+  if(hand==='L'&&seq[0]!==f[0]) out.push('Abajo del todo empiezas con el '+seq[0]+' en '+nm(sp[0])+'.');
+  if(thumbs.some(function(t){return FBLK[(D.pc+D.sc.semis[t])%12]})) out.push('Aquí el pulgar cae en una tecla negra: mete la mano hacia el fondo del teclado.');
+  /* Posiciones (grupos) en orden desde la tónica */
+  var groups=[], cur=null;
+  for(i=0;i<N;i++){
+    var dg=i, start=hand==='R'?f[dg]===1:(f[dg]===c.size[dg]);
+    if(!cur||start){ cur=[]; groups.push(cur); }
+    cur.push(dg);
+  }
+  /* une el primer trozo con el último si la tónica cae a mitad de grupo */
+  if(groups.length>1){
+    var first=groups[0], isStart=hand==='R'?f[first[0]]===1:f[first[0]]===c.size[first[0]];
+    if(!isStart){ groups[groups.length-1]=groups[groups.length-1].concat(first); groups.shift(); }
+  }
+  return {lines:out,route:route,groups:groups,thumbs:thumbs,f:f};
+}
+
+/* Teclado dibujado: keys = [{s, off, name, rf, lf, rcross, lcross}] */
+function isBlackS(s){ return !!FBLK[((s%12)+12)%12]; }
+function kbLayout(s0,s1,x,w){
+  var lo=s0, hi=s1; while(isBlackS(lo)) lo--; while(isBlackS(hi)) hi++;
+  var whites=[]; for(var s=lo;s<=hi;s++) if(!isBlackS(s)) whites.push(s);
+  var ww=w/whites.length, pos={};
+  whites.forEach(function(s,i){ pos[s]={x:x+i*ww,w:ww,black:false,cx:x+i*ww+ww/2}; });
+  for(s=lo;s<=hi;s++) if(isBlackS(s)){ var a=pos[s-1]; pos[s]={x:a.x+ww-ww*0.3,w:ww*0.6,black:true,cx:a.x+ww}; }
+  return {lo:lo,hi:hi,ww:ww,pos:pos,whites:whites};
+}
+function drawKb(ctx,x,y,w,h,keys,opt){
+  opt=opt||{};
+  var s0=keys[0].s, s1=keys[keys.length-1].s, K=kbLayout(s0,s1,x,w), byS={};
+  keys.forEach(function(k){ byS[k.s]=k; });
+  var s, p, k, bh=h*0.62;
+  for(s=K.lo;s<=K.hi;s++){ p=K.pos[s]; if(p.black) continue; k=byS[s];
+    ctx.fillStyle=k?pPastel(k.off):'#ffffff'; ctx.fillRect(p.x,y,p.w,h);
+    ctx.strokeStyle='#3a3458'; ctx.lineWidth=2; ctx.strokeRect(p.x,y,p.w,h);
+    if(k&&opt.names) pText(ctx,k.name,p.cx,y+h-18,'700 '+Math.round(Math.min(30,p.w*0.36))+'px '+PFB,PINK,'center');
+  }
+  for(s=K.lo;s<=K.hi;s++){ p=K.pos[s]; if(!p.black) continue; k=byS[s];
+    ctx.fillStyle='#262138'; pRound(ctx,p.x,y-1,p.w,bh,6); ctx.fill();
+    if(k){
+      ctx.fillStyle=pDeep(k.off); pRound(ctx,p.x+4,y+bh*0.42,p.w-8,bh*0.54,6); ctx.fill();
+      if(opt.names) pText(ctx,k.name,p.cx,y+bh*0.42+bh*0.54-14,'700 '+Math.round(Math.min(24,p.w*0.42))+'px '+PFB,'#ffffff','center');
+    }
+  }
+  if(opt.fingers){
+    var r=opt.r||22, st=opt.stag||0;
+    function cy(k,dir){ var b=K.pos[k.s].black; return dir<0?y-opt.gap-(b?st:0):y+h+opt.gap+(b?st:0); }
+    keys.forEach(function(k,i){
+      var cx=K.pos[k.s].cx;
+      [['rf',cy(k,-1),'rcross',-1],['lf',cy(k,1),'lcross',1]].forEach(function(o){
+        if(k[o[0]]==null) return;
+        var thumb=k[o[0]]===1;
+        ctx.beginPath(); ctx.arc(cx,o[1],r,0,Math.PI*2);
+        ctx.fillStyle=thumb?PINK:'#ffffff'; ctx.fill(); ctx.lineWidth=3; ctx.strokeStyle=PINK; ctx.stroke();
+        pText(ctx,String(k[o[0]]),cx,o[1]+r*0.38,'700 '+Math.round(r*1.1)+'px '+PFB,thumb?'#ffffff':PINK,'center');
+        if(k[o[2]]&&i>0){
+          var px=K.pos[keys[i-1].s].cx, dir=o[3], py=cy(keys[i-1],dir), yy=(dir<0?Math.min(py,o[1]):Math.max(py,o[1]))+dir*(r+6);
+          ctx.strokeStyle=PACC; ctx.lineWidth=4; ctx.beginPath();
+          ctx.moveTo(px+4,yy); ctx.quadraticCurveTo((px+cx)/2,yy+dir*34,cx-4,yy); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(cx-4,yy); ctx.lineTo(cx-18,yy+dir*12); ctx.lineTo(cx-2,yy+dir*16); ctx.closePath(); ctx.fillStyle=PACC; ctx.fill();
+        }
+      });
+    });
+  }
+  return K;
+}
+
+/* Pentagrama */
+var PGL=null;
+function pGlyph(ctx,name,x,y,k){
+  if(!PGL||!PGL[name]) return;
+  ctx.save(); ctx.translate(x,y); ctx.scale(k,-k); ctx.fillStyle=PINK; ctx.fill(new Path2D(PGL[name])); ctx.restore();
+}
+function drawAcc(ctx,a,x,y,SP){
+  var k=SP/250;
+  if(a===0) pGlyph(ctx,'natural',x,y+125*k,k);
+  else if(a===1) pGlyph(ctx,'sharp',x,y+125*k,k);
+  else if(a===-1) pGlyph(ctx,'flat',x,y+125*k,k);
+  else if(a===-2){ pGlyph(ctx,'flat',x-SP*0.55,y+125*k,k); pGlyph(ctx,'flat',x,y+125*k,k); }
+  else if(a===2){ ctx.save(); ctx.strokeStyle=PINK; ctx.lineWidth=SP*0.16; ctx.lineCap='round'; var c=x+SP*0.3, d=SP*0.3;
+    ctx.beginPath(); ctx.moveTo(c-d,y-d); ctx.lineTo(c+d,y+d); ctx.moveTo(c+d,y-d); ctx.lineTo(c-d,y+d); ctx.stroke(); ctx.restore(); }
+}
+function drawSystem(ctx,D,y0,desc,label){
+  var SP=20, x0=PM+40, x1=PW-PM, N=D.N, sp=D.sp;
+  var tTop=y0+160, tBot=tTop+4*SP, bTop=tBot+8*SP, bBot=bTop+4*SP;
+  pText(ctx,label,PM,y0+30,'700 30px '+PFH,PINK);
+  pText(ctx,'MD',PM,tBot-SP*1.5,'700 22px '+PFB,PGRAY);
+  pText(ctx,'MI',PM,bBot-SP*1.5,'700 22px '+PFB,PGRAY);
+  ctx.strokeStyle=PINK; ctx.lineWidth=2;
+  for(var i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(x0,tTop+i*SP); ctx.lineTo(x1,tTop+i*SP); ctx.moveTo(x0,bTop+i*SP); ctx.lineTo(x1,bTop+i*SP); ctx.stroke(); }
+  ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x0,tTop); ctx.lineTo(x0,bBot); ctx.moveTo(x1,tTop); ctx.lineTo(x1,bBot); ctx.stroke();
+  ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(x1-3,tTop); ctx.lineTo(x1-3,bBot); ctx.stroke();
+  ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x1-14,tTop); ctx.lineTo(x1-14,bBot); ctx.stroke();
+  var k=SP/250;
+  pGlyph(ctx,'gclef',x0+12,tBot,k); pGlyph(ctx,'fclef',x0+12,bBot,k);
+  var l0=sp[0].l, oR=l0<=2?4:3, oL=l0<=4?2:1;
+  var idx=[]; for(i=0;i<=2*N;i++) idx.push(i); if(desc) idx.reverse();
+  var xs=x0+110, step=(x1-40-xs)/(idx.length-1);
+  [['R',30,tBot,oR,D.R.seq],['L',18,bBot,oL,D.L.seq]].forEach(function(H){
+    var last={}, bot=H[1], botY=H[2], start=7*H[3]+l0;
+    idx.forEach(function(ii,j){
+      var d=sp[ii%N], dn=start+d.off+7*Math.floor(ii/N), y=botY-(dn-bot)*SP/2, x=xs+j*step, dd;
+      ctx.strokeStyle=PINK; ctx.lineWidth=2;
+      for(dd=bot-2;dd>=dn;dd-=2){ var ly=botY-(dd-bot)*SP/2; ctx.beginPath(); ctx.moveTo(x-SP*0.95,ly); ctx.lineTo(x+SP*0.95,ly); ctx.stroke(); }
+      for(dd=bot+10;dd<=dn;dd+=2){ ly=botY-(dd-bot)*SP/2; ctx.beginPath(); ctx.moveTo(x-SP*0.95,ly); ctx.lineTo(x+SP*0.95,ly); ctx.stroke(); }
+      var prev=last[dn]===undefined?0:last[dn];
+      if(d.a!==prev) drawAcc(ctx,d.a,x-SP*1.75,y,SP);
+      last[dn]=d.a;
+      ctx.save(); ctx.translate(x,y); ctx.rotate(-22*Math.PI/180); ctx.beginPath(); ctx.ellipse(0,0,SP*0.62,SP*0.44,0,0,Math.PI*2); ctx.fillStyle=PINK; ctx.fill(); ctx.restore();
+      var f=H[4][ii], cr;
+      if(H[0]==='R') cr=desc?(j>0&&H[4][idx[j-1]]===1):(ii>0&&f===1);
+      else cr=desc?(j>0&&f===1):(ii>0&&H[4][ii-1]===1);
+      var fy=H[0]==='R'?tTop-4.6*SP:bBot+5.6*SP;
+      pText(ctx,String(f),x,fy,(cr?'800 ':'600 ')+'30px '+PFB,cr?PACC:PINK,'center');
+    });
+  });
+  return bBot+5.6*SP+40;
+}
+
+/* Página 1: digitación, movimiento, posiciones y rutina */
+function drawPage1(ctx,D){
+  var sc=D.sc, pc=D.pc, y;
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,PW,PH);
+  pText(ctx,fullName(pc,sc).replace(/^./,function(c){return c.toUpperCase()}),PM,168,'800 76px '+PFH,PINK);
+  pText(ctx,'Hoja de práctica · Entrenador de Escalas',PW-PM,120,'500 24px '+PFB,PGRAY,'right');
+  pText(ctx,D.sp.map(nm).join('   '),PM,240,'700 46px '+PFH,PINK);
+  pText(ctx,'Fórmula  '+sc.f.map(degStr).join(' ')+'     Pasos  '+stepsStr(sc),PM,290,'500 28px '+PFB,PGRAY);
+  y=pWrap(ctx,sc.how+' '+sc.mood,PM,336,PW-2*PM,36,'400 28px '+PFB,PINK);
+
+  y=Math.max(y+18,400); pSection(ctx,'Digitación · dos octavas',y);
+  ctx.textAlign='right'; pText(ctx,'● pulgar      ⌒ cruce: el pulgar pasa por debajo o un dedo por encima',PW-PM,y-2,'500 22px '+PFB,PGRAY,'right');
+  var keys=D.notes.map(function(n,i){
+    var N=D.N, d=n.deg;
+    return {s:n.s,off:n.off,name:n.name,rf:n.rf,lf:n.lf,rcross:i>0&&n.rf===1,lcross:i>0&&D.notes[i-1].lf===1};
+  });
+  var kbTop=y+178, kh=240;
+  pText(ctx,'MD',PM,kbTop-78,'800 28px '+PFH,PINK);
+  pText(ctx,'MI',PM,kbTop+kh+98,'800 28px '+PFH,PINK);
+  drawKb(ctx,PM+70,kbTop,PW-2*PM-70,kh,keys,{names:true,fingers:true,gap:50,stag:56,r:23});
+  y=kbTop+kh+182;
+
+  pSection(ctx,'Cómo se mueve la mano',y); y+=58;
+  var colW=(PW-2*PM-60)/2, yy=[y,y];
+  ['R','L'].forEach(function(h,ci){
+    var x=PM+ci*(colW+60), I=handInfo(D,h), cy=y;
+    pText(ctx,h==='R'?'Mano derecha':'Mano izquierda',x,cy,'800 32px '+PFH,PINK); cy+=46;
+    var cx=x; ctx.font='700 30px '+PFB;
+    I.route.forEach(function(r){
+      if(r.cross){ cx+=pText(ctx,'↷',cx,cy,'700 30px '+PFB,PACC)+8; }
+      var w1=pText(ctx,r.name,cx,cy,'700 30px '+PFB,PINK);
+      var w2=pText(ctx,String(r.f),cx+w1+2,cy+8,'700 20px '+PFB,r.f===1?PACC:PGRAY);
+      cx+=w1+w2+16;
+      if(cx>x+colW-40){ cx=x; cy+=44; }
+    });
+    cy+=48;
+    I.lines.forEach(function(t){ cy=pWrap(ctx,'• '+t,x,cy,colW,34,'400 26px '+PFB,PINK)+6; });
+    yy[ci]=cy;
+  });
+  y=Math.max(yy[0],yy[1])+16;
+
+  pSection(ctx,'Posiciones · tócalas como acordes para memorizar el dibujo',y); y+=40;
+  var hy=y;
+  ['R','L'].forEach(function(h,ci){
+    var x=PM+ci*(colW+60), I=handInfo(D,h), gx=x;
+    pText(ctx,h==='R'?'MD':'MI',x,hy+30,'800 26px '+PFH,PINK);
+    gx+=60;
+    var avail=colW-60-(I.groups.length-1)*24, tot=0, spans=[];
+    I.groups.forEach(function(g){
+      var a=D.pc+D.sc.semis[g[0]], b=D.pc+D.sc.semis[g[g.length-1]]+(D.sc.semis[g[g.length-1]]<D.sc.semis[g[0]]?12:0);
+      var K=kbLayout(a,b,0,100); spans.push({g:g,a:a,n:K.whites.length}); tot+=K.whites.length;
+    });
+    var ww=Math.min(56,avail/tot);
+    spans.forEach(function(S){
+      var ks=S.g.map(function(dg,j){ var s=D.pc+D.sc.semis[dg]; if(s<S.a) s+=12; var o={s:s,off:D.sp[dg].off,name:nm(D.sp[dg])}; o[h==='R'?'rf':'lf']=I.f[dg]; return o; });
+      var K=drawKb(ctx,gx,hy+50,ww*S.n,116,ks,{names:true});
+      ks.forEach(function(k){ var p=K.pos[k.s], fv=k[h==='R'?'rf':'lf'];
+        pText(ctx,String(fv),p.cx,hy+38,'800 26px '+PFB,fv===1?PACC:PINK,'center'); });
+      gx+=ww*S.n+24;
+    });
+  });
+  y=hy+50+116+46;
+  var R=D.R.cyc.f, L=D.L.cyc.f, co=[];
+  for(var i=0;i<D.N;i++) if(R[i]===1&&L[i]===1) co.push(nm(D.sp[i]));
+  y=pWrap(ctx,co.length?'Manos juntas: los dos pulgares coinciden en '+pList(co)+'. Úsalo como punto de encuentro.':'Manos juntas: los pulgares nunca coinciden. Domina cada mano por separado antes de juntarlas.',PM,y,PW-2*PM,34,'600 26px '+PFB,PINK)+20;
+
+  pSection(ctx,'Rutina',y); y+=50;
+  var nx=rootName((pc+7)%12,sc);
+  var cr=I0cross(D);
+  var tasks=[
+    'Bloques: toca cada posición como un acorde, primero la MD y luego la MI. Sube y baja por las posiciones 5 veces mirando la forma.',
+    'Paso del pulgar: repite solo los cruces de la MD ('+cr+'), despacio y con la muñeca quieta.',
+    'Manos separadas, 1 octava, ♩ = 60 en corcheas. Después 2 octavas.',
+    'Manos juntas, 1 octava y luego 2.',
+    'Ritmos: largo-corto, corto-largo y acento cada 3 notas.',
+    'Di en voz alta las notas (o los grados) mientras tocas. Luego, sin mirar las manos.',
+    'Cierra los ojos, visualiza el teclado y tócala. Mañana: '+nx+' '+sc.short+' (+5ª).'
+  ];
+  tasks.forEach(function(t){
+    ctx.strokeStyle=PINK; ctx.lineWidth=2.5; pRound(ctx,PM,y-24,28,28,5); ctx.stroke();
+    y=pWrap(ctx,t,PM+46,y,PW-2*PM-46,31,'400 25px '+PFB,PINK)+6;
+  });
+  y+=8; pSection(ctx,'Registro de la semana',y); y+=26;
+  var rows=['Tempo ♩ =','Manos separadas','Manos juntas','De memoria'], cols=['L','M','X','J','V','S','D'];
+  var lw=300, cw=(PW-2*PM-lw)/7, rh=Math.min(46,(PH-70-y-44)/rows.length);
+  ctx.strokeStyle=PLINE; ctx.lineWidth=2;
+  cols.forEach(function(c,i){ pText(ctx,c,PM+lw+cw*i+cw/2,y+32,'700 24px '+PFB,PGRAY,'center'); });
+  y+=44;
+  rows.forEach(function(r,j){
+    pText(ctx,r,PM,y+j*rh+rh*0.66,'500 24px '+PFB,PINK);
+    ctx.strokeRect(PM+lw,y+j*rh,cw*7,rh);
+    for(var i=1;i<7;i++){ ctx.beginPath(); ctx.moveTo(PM+lw+cw*i,y+j*rh); ctx.lineTo(PM+lw+cw*i,y+(j+1)*rh); ctx.stroke(); }
+  });
+  pFooter(ctx,1);
+}
+function I0cross(D){
+  var f=D.R.cyc.f, N=D.N, out=[];
+  for(var i=0;i<N;i++) if(f[i]===1){ var p=(i-1+N)%N; out.push(nm(D.sp[p])+'→'+nm(D.sp[i])); }
+  return out.join(', ');
+}
+function pFooter(ctx,n){
+  pText(ctx,'Digitación orientativa: si tu profesor te indica otra, apúntala encima.',PM,PH-48,'400 20px '+PFB,PGRAY);
+  pText(ctx,'seropioupale.github.io/escalas · '+n+'/2',PW-PM,PH-48,'400 20px '+PFB,PGRAY,'right');
+}
+/* Página 2: partitura subiendo y bajando, y espacio para notas */
+function drawPage2(ctx,D){
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,PW,PH);
+  pText(ctx,fullName(D.pc,D.sc).replace(/^./,function(c){return c.toUpperCase()})+' · partitura',PM,160,'800 60px '+PFH,PINK);
+  pText(ctx,'Digitación encima (MD) y debajo (MI). En naranja, los dedos que cruzan.',PM,214,'400 26px '+PFB,PGRAY);
+  var y=drawSystem(ctx,D,250,false,'Subiendo · dos octavas');
+  y=drawSystem(ctx,D,y+10,true,'Bajando');
+  pSection(ctx,'Notas',y+30);
+  ctx.strokeStyle=PLINE; ctx.lineWidth=1.5;
+  for(var ly=y+110;ly<PH-110;ly+=64){ ctx.beginPath(); ctx.moveTo(PM,ly); ctx.lineTo(PW-PM,ly); ctx.stroke(); }
+  pFooter(ctx,2);
+}
+
+/* PDF mínimo con una imagen JPEG por página */
+function pdfBuild(pages){
+  var chunks=[], off=0, offs=[], n=2+pages.length*3;
+  function add(x){ var b=typeof x==='string'?pdfStr(x):x; chunks.push(b); off+=b.length; }
+  function obj(i,body){ offs[i]=off; add(i+' 0 obj\n'); if(Array.isArray(body)) body.forEach(add); else add(body); add('\nendobj\n'); }
+  add('%PDF-1.4\n'); add(new Uint8Array([37,226,227,207,211,10]));
+  var kids=[]; pages.forEach(function(p,i){ kids.push((3+i*3)+' 0 R'); });
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2,'<< /Type /Pages /Kids ['+kids.join(' ')+'] /Count '+pages.length+' >>');
+  pages.forEach(function(p,i){
+    var po=3+i*3, co=po+1, io=po+2, cs='q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+    obj(po,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 '+io+' 0 R >> >> /Contents '+co+' 0 R >>');
+    obj(co,'<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream');
+    obj(io,['<< /Type /XObject /Subtype /Image /Width '+p.w+' /Height '+p.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.jpg.length+' >>\nstream\n',p.jpg,'\nendstream']);
+  });
+  var xref=off, s='xref\n0 '+(n+1)+'\n0000000000 65535 f \n';
+  for(var i=1;i<=n;i++) s+=('0000000000'+offs[i]).slice(-10)+' 00000 n \n';
+  s+='trailer\n<< /Size '+(n+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n';
+  add(s);
+  return new Blob(chunks,{type:'application/pdf'});
+}
+function pdfStr(s){ var b=new Uint8Array(s.length); for(var i=0;i<s.length;i++) b[i]=s.charCodeAt(i)&255; return b; }
+function canvasJpeg(cv){
+  return new Promise(function(res){
+    function done(blob){ var fr=new FileReader(); fr.onload=function(){ res(new Uint8Array(fr.result)); }; fr.readAsArrayBuffer(blob); }
+    if(cv.toBlob) cv.toBlob(function(b){ done(b); },'image/jpeg',0.9);
+    else { var d=atob(cv.toDataURL('image/jpeg',0.9).split(',')[1]), u=new Uint8Array(d.length); for(var i=0;i<d.length;i++) u[i]=d.charCodeAt(i); res(u); }
+  });
+}
+function pdfFonts(){
+  if(!document.fonts||!document.fonts.load) return Promise.resolve();
+  var t=new Promise(function(r){ setTimeout(r,2500); });
+  return Promise.race([t,Promise.all(['800 40px "Bricolage Grotesque"','700 40px "Bricolage Grotesque"','400 20px "Instrument Sans"','600 20px "Instrument Sans"','700 20px "Instrument Sans"'].map(function(f){ return document.fonts.load(f).catch(function(){}); }))]);
+}
+function makeSheetPdf(list,onProg){
+  var cv=document.createElement('canvas'); cv.width=PW; cv.height=PH;
+  var ctx=cv.getContext('2d'), pages=[], thumb=null;
+  return pdfFonts().then(function(){
+    var chain=Promise.resolve();
+    list.forEach(function(it,i){
+      chain=chain.then(function(){
+        var D=sheetData(it.pc,it.sc);
+        drawPage1(ctx,D);
+        if(i===0){ var tc=document.createElement('canvas'); tc.width=331; tc.height=468; tc.getContext('2d').drawImage(cv,0,0,331,468); thumb=tc.toDataURL('image/jpeg',0.8); }
+        return canvasJpeg(cv).then(function(j){ pages.push({jpg:j,w:PW,h:PH}); drawPage2(ctx,D); return canvasJpeg(cv); })
+          .then(function(j){ pages.push({jpg:j,w:PW,h:PH}); if(onProg) onProg(i+1,list.length); return new Promise(function(r){ setTimeout(r,0); }); });
+      });
+    });
+    return chain;
+  }).then(function(){ return {blob:pdfBuild(pages),thumb:thumb}; });
+}
+
+/* Interfaz en el explorador */
+var PDFLAST=null, PDFBUSY=false;
+function pdfSection(box){
+  var cfg=settings.pdf||(settings.pdf={all:false});
+  var sc=S[ex.sk];
+  box.appendChild(mk('p','grp','Hoja para practicar al piano (PDF)'));
+  var f=mk('div','field'); f.appendChild(mk('span','lab','Incluir'));
+  var sg=mk('div','seg');
+  [[false,'Esta escala'],[true,'Las 12 tonalidades']].forEach(function(o){
+    var b=btn('',o[1],function(){ cfg.all=o[0]; save('ee.settings.v1',settings); paintStudy(); });
+    b.setAttribute('aria-pressed',String(cfg.all===o[0])); sg.appendChild(b);
+  });
+  f.appendChild(sg); box.appendChild(f);
+  var name=cfg.all?sc.name+' en las 12 tonalidades':fullName(ex.pc,sc);
+  var key=(cfg.all?'all':ex.pc)+':'+ex.sk+':'+settings.nota;
+  var go=btn('ghost','Crear PDF · '+name,function(){
+    if(PDFBUSY) return; PDFBUSY=true; go.disabled=true; go.textContent='Preparando…';
+    var list=[];
+    if(cfg.all) [0,7,2,9,4,11,6,1,8,3,10,5].forEach(function(p){ list.push({pc:p,sc:sc}); });
+    else list.push({pc:ex.pc,sc:sc});
+    makeSheetPdf(list,function(a,b){ if(b>1) go.textContent='Preparando… '+a+'/'+b; }).then(function(r){
+      var fn=pFile(cfg.all?'Escalas - '+sc.name+' (12 tonalidades).pdf':'Escala - '+fullName(ex.pc,sc)+'.pdf');
+      PDFLAST={key:key,blob:r.blob,thumb:r.thumb,name:fn,pages:list.length*2};
+      PDFBUSY=false; paintStudy();
+    }).catch(function(e){ PDFBUSY=false; go.disabled=false; go.textContent='No se pudo crear el PDF'; if(window.console) console.error(e); });
+  });
+  go.style.width='100%'; box.appendChild(go);
+  if(PDFLAST&&PDFLAST.key===key){
+    var res=mk('div','pdfres');
+    var im=document.createElement('img'); im.src=PDFLAST.thumb; im.alt='Vista previa de la hoja'; res.appendChild(im);
+    var col=mk('div','pdfcol');
+    col.appendChild(mk('p','hint',PDFLAST.pages+' páginas · '+Math.max(1,Math.round(PDFLAST.blob.size/1024))+' KB'));
+    var file=null; try{ file=new File([PDFLAST.blob],PDFLAST.name,{type:'application/pdf'}); }catch(e){}
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+      col.appendChild(btn('cta','Enviar a… (GoodNotes, Archivos)',function(){ navigator.share({files:[file],title:PDFLAST.name}).catch(function(){}); }));
+    }
+    col.appendChild(btn('ghost','Descargar',function(){
+      var u=URL.createObjectURL(PDFLAST.blob), a=document.createElement('a'); a.href=u; a.download=PDFLAST.name;
+      document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(u); },4000);
+    }));
+    res.appendChild(col); box.appendChild(res);
+  } else box.appendChild(mk('p','hint','Dos páginas por escala: teclado con la digitación de las dos manos, cómo se mueve la mano, posiciones para tocar en bloque, rutina con casillas y la partitura subiendo y bajando.'));
+}
+PGL={"gclef":"M314 801Q300 854 291.0 906.0Q282 958 282 1012Q282 1059 288.5 1100.5Q295 1142 307 1177Q320 1217 341.0 1252.5Q362 1288 385.5 1311.0Q409 1334 427 1334Q451 1334 493 1249Q514 1206 524.0 1156.0Q534 1106 534 1049Q534 978 515.0 907.5Q496 837 459.5 775.0Q423 713 372 666L407 498Q422 500 432.0 501.0Q442 502 447 502Q508 502 556.0 467.5Q604 433 632.5 377.0Q661 321 661 254Q661 177 621.5 115.5Q582 54 503 25Q508 8 532 -117Q538 -147 541.0 -164.5Q544 -182 545.0 -195.0Q546 -208 546 -225Q546 -275 521.5 -314.5Q497 -354 455.5 -376.0Q414 -398 363 -398Q311 -398 271.0 -378.5Q231 -359 208.0 -324.5Q185 -290 185 -245Q185 -197 211.5 -165.0Q238 -133 287 -133Q329 -133 355.5 -163.5Q382 -194 382 -236Q382 -272 357.0 -299.0Q332 -326 292 -326H282Q308 -365 364 -365Q433 -365 472.0 -320.0Q511 -275 511 -205Q511 -188 507.0 -159.5Q503 -131 493 -91Q483 -51 477.5 -25.0Q472 1 470 12Q436 2 390 2Q304 2 222 52Q142 102 96.0 184.0Q50 266 50 361Q50 451 91 530Q132 609 192.5 675.0Q253 741 314 801ZM341 826Q364 838 390.0 870.5Q416 903 440.0 945.0Q464 987 479.0 1029.5Q494 1072 494 1106Q494 1142 483.0 1163.0Q472 1184 445 1184Q421 1184 398.5 1162.0Q376 1140 358.5 1103.5Q341 1067 331.0 1022.0Q321 977 321 930Q321 898 327.5 872.0Q334 846 341 826ZM398 379Q371 373 347.0 353.5Q323 334 308.5 306.5Q294 279 294 248Q294 223 307.0 196.5Q320 170 339 154Q352 142 365 136Q380 129 380 123Q380 120 370 117Q332 126 301.5 151.0Q271 176 253.5 211.5Q236 247 236 287Q236 330 253.5 370.0Q271 410 302.5 442.0Q334 474 374 490L345 641Q229 547 174.5 456.5Q120 366 120 277Q120 212 154.0 156.0Q188 100 247.0 65.5Q306 31 380 31Q400 31 420.5 35.0Q441 39 464 45ZM495 55Q593 97 593 227Q593 270 571.0 305.5Q549 341 512.0 362.0Q475 383 429 383Z","fclef":"M50 123Q216 231 288 301Q336 348 373.0 408.5Q410 469 431.5 536.0Q453 603 453 669Q453 728 435.0 773.5Q417 819 383.0 845.0Q349 871 302 871Q284 871 264.5 867.0Q245 863 224 855Q181 839 158.0 813.5Q135 788 135 765Q135 756 143.0 752.0Q151 748 158 748Q168 748 183 752Q190 754 196.5 755.0Q203 756 210 756Q248 756 272.0 733.5Q296 711 296 674Q296 638 266.0 612.0Q236 586 195 586Q146 586 111.0 617.0Q76 648 76 697Q76 756 109.0 802.0Q142 848 198.5 874.0Q255 900 324 900Q400 900 460.0 867.0Q520 834 555.5 776.5Q591 719 591 646Q591 551 538 464Q511 419 476.5 379.0Q442 339 389.0 297.5Q336 256 256.0 208.0Q176 160 57 101ZM687 809Q710 809 726.0 793.0Q742 777 742 754Q742 731 726.0 715.5Q710 700 687 700Q664 700 648.0 715.5Q632 731 632 754Q632 777 648.0 793.0Q664 809 687 809ZM687 589Q710 589 726.0 573.0Q742 557 742 534Q742 511 726.0 495.5Q710 480 687 480Q664 480 648.0 495.5Q632 511 632 534Q632 557 648.0 573.0Q664 589 687 589Z","sharp":"M97 46V189L50 177V277L97 290V486H128V298L195 314V509H226V322L275 333V234L226 220V77L275 89V-14L226 -26V-214H195V-34L128 -52V-247H97V-59L50 -71V32ZM195 70V214L128 197V54Z","flat":"M50 615H81V225Q118 262 165 262Q197 262 223.0 240.5Q249 219 249 178Q249 146 230.0 119.0Q211 92 179 65L110 6Q91 -10 76.0 -25.5Q61 -41 50 -55ZM81 12Q107 40 125.0 63.5Q143 87 153 105Q164 124 169.5 140.0Q175 156 175 170Q175 198 162.0 210.5Q149 223 134 223Q118 223 102.5 211.5Q87 200 81 180Z","natural":"M226 316V-221H195V-9L50 -46V486H83V279ZM197 84V212L81 183V56Z"};
+
 /* ---------- Explorador ---------- */
 function showEx(){
   var sc=S[ex.sk];
@@ -1426,6 +1872,7 @@ function paintStudy(){
   }
   box.appendChild(roots);
   impSection(box);
+  pdfSection(box);
   var det=document.createElement('details'); det.open=libOpen;
   det.addEventListener('toggle',function(){libOpen=det.open});
   var sm=mk('summary','hint','Todas las escalas ('+SCALES.length+')'); sm.style.cursor='pointer'; sm.style.padding='4px 0';
