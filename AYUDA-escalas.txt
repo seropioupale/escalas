@@ -65,6 +65,29 @@ Orden: Nota característica, Intrusa, Escala madre, Escala de oído y:
 - Alteraciones: «¿Cuántas alteraciones tiene Re dórico?».
 - Grado de oído: suena la escala y luego una nota; dices qué grado es.
 
+MODO IMPROVISACIÓN
+------------------
+En el explorador, debajo de la escala elegida: «Improvisar con esta
+escala». Tocas libremente durante 1, 2, 3 o 5 minutos. Cada nota de la
+escala se ilumina en verde; cada nota fuera, en rojo, y abajo te dice qué
+notas tiene la escala.
+- Fondo: nada, bordón (la tónica sostenida), clic de metrónomo o vamp
+  (acordes que hacen sonar el color del modo). Tempo ajustable.
+- Guía: «Siempre» (teclas coloreadas por grado), «Desvanecer» (los colores
+  se apagan a medida que aciertas y vuelven si fallas) o «Sin guía».
+- Retos: cada pocos segundos aparece una misión (empieza o termina en la
+  tónica, toca la nota característica, sube o baja 5 notas seguidas,
+  arpegia, salta, repite un motivo...). Cada reto superado suma.
+- Grados tocados: las fichas 1 2 3... se encienden cuando has usado cada
+  grado, para que no te dejes ninguno.
+- Al terminar: notas tocadas, % dentro de la escala, retos superados,
+  % a tiempo con el pulso (aproximado), grados que no usaste y las notas
+  fuera de escala que más se te escaparon. Con 20 notas o más se guarda tu
+  mejor marca para esa escala.
+Método recomendado (5 minutos): 1 min con guía «Siempre», 2 min con
+«Desvanecer» y 2 min «Sin guía». Al día siguiente, la misma escala una
+quinta más arriba (botón +5ª).
+
 EN HORIZONTAL
 -------------
 Gira el móvil durante la ronda: el teclado ocupa todo el ancho de abajo y
@@ -112,6 +135,11 @@ tono sintético sencillo.
 
 REGISTRO DE CAMBIOS
 -------------------
+v1.4 (17-11-2026)
+- Modo improvisación: temporizador, verde/rojo por nota, bordón, clic o
+  vamp de fondo, guía que se desvanece, retos rotativos, grados tocados y
+  resumen final con mejor marca por escala.
+
 v1.3 (17-11-2026)
 - Diseño para iPad: en vertical, una columna ancha con todo más grande;
   en horizontal, la pregunta arriba y el teclado a todo lo ancho abajo.
