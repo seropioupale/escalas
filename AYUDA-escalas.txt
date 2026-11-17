@@ -88,6 +88,24 @@ Método recomendado (5 minutos): 1 min con guía «Siempre», 2 min con
 «Desvanecer» y 2 min «Sin guía». Al día siguiente, la misma escala una
 quinta más arriba (botón +5ª).
 
+PRACTICAR EN TU PIANO (MICRÓFONO)
+---------------------------------
+En el explorador: «Escuchar mi piano» → Sí, y acepta el permiso de
+micrófono. La barra de nivel se mueve y te dice qué nota oye.
+- Rutina guiada en 7 pasos (los mismos de la hoja PDF): MD 1 octava,
+  MI 1 octava, MD 2 octavas, MI 2 octavas, manos juntas 1 y 2 octavas, y
+  de memoria. Te marca la tecla y el dedo; cada nota correcta avanza y
+  cada fallo se apunta. Un paso se supera con 1 error como mucho y queda
+  marcado con ✓ para esa escala.
+- Al terminar: errores, tiempo, tempo (en corcheas), regularidad y dónde
+  fallas, separando los fallos en los cruces del pulgar.
+- Con el micrófono encendido, el piano real también sirve para la
+  improvisación, los ejercicios de tocar y la prueba libre.
+Consejos: móvil cerca del piano; funciona con legato, con pedal y con las
+manos juntas. En la improvisación, el bordón y el vamp pueden colarse:
+mejor con auriculares o con «Clic». Si el micrófono se pierde una nota y
+tocas la siguiente, la app da las dos por buenas.
+
 HOJA DE PRÁCTICA EN PDF
 -----------------------
 En el explorador, debajo de la escala elegida: «Crear PDF». Dos páginas
@@ -155,6 +173,11 @@ tono sintético sencillo.
 
 REGISTRO DE CAMBIOS
 -------------------
+v1.6 (17-11-2026)
+- Práctica con el piano real por micrófono: rutina guiada en 7 pasos con
+  tecla y dedo, aciertos y errores, tempo, regularidad y dónde fallas.
+  El micrófono también vale para improvisación, ejercicios y prueba libre.
+
 v1.5 (17-11-2026)
 - Hoja de práctica en PDF por escala (o las 12 tonalidades): digitación de
   las dos manos, movimiento de la mano, posiciones, rutina y partitura.
