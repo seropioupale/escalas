@@ -693,7 +693,7 @@ body[data-view="guires"] #guires{display:flex}
       <div class="row-btns"><button class="ghost" id="btnGBack" type="button">Volver al explorador</button></div>
       <button class="cta" id="btnGAgain" type="button">Repetir paso</button>
     </section>
-    <p class="ver">Versión 1.6</p>
+    <p class="ver">Versión 1.6.1</p>
   </div>
 </main>
 
@@ -1856,7 +1856,7 @@ function pdfSection(box){
 PGL={"gclef":"M314 801Q300 854 291.0 906.0Q282 958 282 1012Q282 1059 288.5 1100.5Q295 1142 307 1177Q320 1217 341.0 1252.5Q362 1288 385.5 1311.0Q409 1334 427 1334Q451 1334 493 1249Q514 1206 524.0 1156.0Q534 1106 534 1049Q534 978 515.0 907.5Q496 837 459.5 775.0Q423 713 372 666L407 498Q422 500 432.0 501.0Q442 502 447 502Q508 502 556.0 467.5Q604 433 632.5 377.0Q661 321 661 254Q661 177 621.5 115.5Q582 54 503 25Q508 8 532 -117Q538 -147 541.0 -164.5Q544 -182 545.0 -195.0Q546 -208 546 -225Q546 -275 521.5 -314.5Q497 -354 455.5 -376.0Q414 -398 363 -398Q311 -398 271.0 -378.5Q231 -359 208.0 -324.5Q185 -290 185 -245Q185 -197 211.5 -165.0Q238 -133 287 -133Q329 -133 355.5 -163.5Q382 -194 382 -236Q382 -272 357.0 -299.0Q332 -326 292 -326H282Q308 -365 364 -365Q433 -365 472.0 -320.0Q511 -275 511 -205Q511 -188 507.0 -159.5Q503 -131 493 -91Q483 -51 477.5 -25.0Q472 1 470 12Q436 2 390 2Q304 2 222 52Q142 102 96.0 184.0Q50 266 50 361Q50 451 91 530Q132 609 192.5 675.0Q253 741 314 801ZM341 826Q364 838 390.0 870.5Q416 903 440.0 945.0Q464 987 479.0 1029.5Q494 1072 494 1106Q494 1142 483.0 1163.0Q472 1184 445 1184Q421 1184 398.5 1162.0Q376 1140 358.5 1103.5Q341 1067 331.0 1022.0Q321 977 321 930Q321 898 327.5 872.0Q334 846 341 826ZM398 379Q371 373 347.0 353.5Q323 334 308.5 306.5Q294 279 294 248Q294 223 307.0 196.5Q320 170 339 154Q352 142 365 136Q380 129 380 123Q380 120 370 117Q332 126 301.5 151.0Q271 176 253.5 211.5Q236 247 236 287Q236 330 253.5 370.0Q271 410 302.5 442.0Q334 474 374 490L345 641Q229 547 174.5 456.5Q120 366 120 277Q120 212 154.0 156.0Q188 100 247.0 65.5Q306 31 380 31Q400 31 420.5 35.0Q441 39 464 45ZM495 55Q593 97 593 227Q593 270 571.0 305.5Q549 341 512.0 362.0Q475 383 429 383Z","fclef":"M50 123Q216 231 288 301Q336 348 373.0 408.5Q410 469 431.5 536.0Q453 603 453 669Q453 728 435.0 773.5Q417 819 383.0 845.0Q349 871 302 871Q284 871 264.5 867.0Q245 863 224 855Q181 839 158.0 813.5Q135 788 135 765Q135 756 143.0 752.0Q151 748 158 748Q168 748 183 752Q190 754 196.5 755.0Q203 756 210 756Q248 756 272.0 733.5Q296 711 296 674Q296 638 266.0 612.0Q236 586 195 586Q146 586 111.0 617.0Q76 648 76 697Q76 756 109.0 802.0Q142 848 198.5 874.0Q255 900 324 900Q400 900 460.0 867.0Q520 834 555.5 776.5Q591 719 591 646Q591 551 538 464Q511 419 476.5 379.0Q442 339 389.0 297.5Q336 256 256.0 208.0Q176 160 57 101ZM687 809Q710 809 726.0 793.0Q742 777 742 754Q742 731 726.0 715.5Q710 700 687 700Q664 700 648.0 715.5Q632 731 632 754Q632 777 648.0 793.0Q664 809 687 809ZM687 589Q710 589 726.0 573.0Q742 557 742 534Q742 511 726.0 495.5Q710 480 687 480Q664 480 648.0 495.5Q632 511 632 534Q632 557 648.0 573.0Q664 589 687 589Z","sharp":"M97 46V189L50 177V277L97 290V486H128V298L195 314V509H226V322L275 333V234L226 220V77L275 89V-14L226 -26V-214H195V-34L128 -52V-247H97V-59L50 -71V32ZM195 70V214L128 197V54Z","flat":"M50 615H81V225Q118 262 165 262Q197 262 223.0 240.5Q249 219 249 178Q249 146 230.0 119.0Q211 92 179 65L110 6Q91 -10 76.0 -25.5Q61 -41 50 -55ZM81 12Q107 40 125.0 63.5Q143 87 153 105Q164 124 169.5 140.0Q175 156 175 170Q175 198 162.0 210.5Q149 223 134 223Q118 223 102.5 211.5Q87 200 81 180Z","natural":"M226 316V-221H195V-9L50 -46V486H83V279ZM197 84V212L81 183V56Z"};
 
 /* ---------- Micrófono: escuchar el piano real ---------- */
-var MIC={on:false,ctx:null,stream:null,src:null,an:null,buf:null,raf:0,cand:-1,cnt:0,lastPc:-1,armed:true,mute:0,lastRms:0,frame:0,msg:'',rms:0,heard:'',lastKey:12,expect:null,floor:0.004,dbg:null};
+var MIC={on:false,ctx:null,stream:null,src:null,an:null,buf:null,raf:0,cand:-1,cnt:0,lastPc:-1,armed:true,mute:0,lastRms:0,frame:0,msg:'',rms:0,heard:'',lastKey:12,expect:null,floor:0.004,pkMin:3.5,dbg:null};
 function micSetMsg(t){ MIC.msg=t||''; var e=$('micMsg'); if(e) e.textContent=MIC.msg; }
 function micCtx(){
   initAudio(); if(actx) return actx;
@@ -1871,9 +1871,7 @@ function micStart(cb){
   micSetMsg('Pidiendo permiso de micrófono…');
   try{
     navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}}).then(function(s){
-      MIC.stream=s; MIC.src=c.createMediaStreamSource(s); MIC.an=c.createAnalyser(); MIC.an.fftSize=2048;
-      MIC.buf=new Float32Array(MIC.an.fftSize); MIC.src.connect(MIC.an);
-      MIC.an2=c.createAnalyser(); MIC.an2.fftSize=8192; MIC.an2.smoothingTimeConstant=0; MIC.an2.minDecibels=-110; MIC.fbuf=new Float32Array(MIC.an2.frequencyBinCount); MIC.src.connect(MIC.an2); MIC.notes=null; MIC.lastT=0; MIC.on=true; MIC.armed=true; MIC.lastPc=-1;
+      MIC.stream=s; micBuild(c); MIC.on=true; MIC.armed=true; MIC.lastPc=-1; MIC.t0=performance.now(); MIC.peak=0; MIC.retry=0; MIC.noise=0;
       settings.mic=true; save('ee.settings.v1',settings);
       micSetMsg('Escuchando tu piano. Toca una nota para probar.');
       cancelAnimationFrame(MIC.raf); MIC.raf=requestAnimationFrame(micLoop);
@@ -1883,6 +1881,30 @@ function micStart(cb){
       settings.mic=false; save('ee.settings.v1',settings); paintMicUI(); if(cb) cb(false);
     });
   }catch(e){ micSetMsg('No se ha podido abrir el micrófono.'); if(cb) cb(false); }
+}
+/* Cadena: micro → analizadores → ganancia 0 → altavoz (Safari solo procesa lo que llega a la salida) */
+function micBuild(c){
+  try{ if(MIC.src) MIC.src.disconnect(); if(MIC.sink) MIC.sink.disconnect(); }catch(e){}
+  MIC.c=c;
+  try{ if(c.state!=='running') c.resume(); }catch(e){}
+  MIC.src=c.createMediaStreamSource(MIC.stream);
+  MIC.an=c.createAnalyser(); MIC.an.fftSize=2048; MIC.buf=new Float32Array(MIC.an.fftSize);
+  MIC.an2=c.createAnalyser(); MIC.an2.fftSize=8192; MIC.an2.smoothingTimeConstant=0; MIC.an2.minDecibels=-110; MIC.fbuf=new Float32Array(MIC.an2.frequencyBinCount);
+  MIC.sink=c.createGain(); MIC.sink.gain.value=0;
+  MIC.src.connect(MIC.an); MIC.src.connect(MIC.an2); MIC.an.connect(MIC.sink); MIC.an2.connect(MIC.sink); MIC.sink.connect(c.destination);
+  MIC.notes=null; MIC.lastT=0; MIC.sal=null;
+}
+/* Si el micro solo da ceros, se reintenta con un contexto de audio propio */
+function micWatch(now){
+  if(MIC.peak>0||now-MIC.t0<2000) return;
+  if(MIC.retry===0){
+    MIC.retry=1; MIC.t0=now;
+    try{ var AC=window.AudioContext||window.webkitAudioContext; if(MIC.ctx&&MIC.ctx!==actx) MIC.ctx.close(); MIC.ctx=new AC(); micBuild(MIC.ctx); }catch(e){}
+  } else if(MIC.retry===1){
+    MIC.retry=2;
+    var st=MIC.c?MIC.c.state+' · '+MIC.c.sampleRate+' Hz':'sin audio';
+    micSetMsg('El micrófono no da señal ('+st+'). Cierra la app del todo y vuelve a abrirla, y revisa Ajustes › Privacidad › Micrófono. Si tienes el sonido de la app apagado, enciéndelo.');
+  }
 }
 function micStop(){
   MIC.on=false; cancelAnimationFrame(MIC.raf);
@@ -1914,9 +1936,10 @@ function micPrep(sr){
 function micLoop(){
   if(!MIC.on||!MIC.an) return;
   MIC.raf=requestAnimationFrame(micLoop);
-  var c=actx||MIC.ctx, now=performance.now();
+  var c=MIC.c, now=performance.now();
   MIC.frame++;
-  if(MIC.frame%2===0){ MIC.an.getFloatTimeDomainData(MIC.buf); var rs=0; for(var q=0;q<MIC.buf.length;q+=4) rs+=MIC.buf[q]*MIC.buf[q]; MIC.rms=Math.sqrt(rs/(MIC.buf.length/4)); }
+  if(MIC.c&&MIC.c.state!=='running'&&MIC.frame%30===0) try{ MIC.c.resume(); }catch(e){}
+  if(MIC.frame%2===0){ MIC.an.getFloatTimeDomainData(MIC.buf); var rs=0, pk=0; for(var q=0;q<MIC.buf.length;q+=2){ var v0=MIC.buf[q]; rs+=v0*v0; if(v0>pk) pk=v0; else if(-v0>pk) pk=-v0; } MIC.rms=Math.sqrt(rs/(MIC.buf.length/2)); if(pk>MIC.peak) MIC.peak=pk; if(MIC.retry<2) micWatch(now); }
   if(MIC.frame%8===0) micLive();
   if(!MIC.notes) micPrep(c.sampleRate);
   var F=MIC.fbuf; MIC.an2.getFloatFrequencyData(F);
@@ -1933,6 +1956,8 @@ function micLoop(){
     if(inc>imax){ imax=inc; im=i; }
   }
   MIC.gmax=gmax;
+  MIC.noise=MIC.noise?(gmax<MIC.noise?MIC.noise*0.7+gmax*0.3:MIC.noise*1.003):gmax;
+  MIC.floor=Math.max(0.00002,MIC.noise*3);
   if(!MIC.pend){
     if(now>MIC.refr&&gmax>MIC.floor&&imax>0.12*gmax&&imax>MIC.floor*0.5){
       MIC.pend=1; MIC.acc.fill(0); MIC.acc[im]+=imax; MIC.pendT=now;
@@ -1945,8 +1970,12 @@ function micLoop(){
   var best=-1, bv=0, byPc=[0,0,0,0,0,0,0,0,0,0,0,0], bmPc=[];
   for(i=0;i<N.length;i++){ var a=MIC.acc[i]; if(a>bv){ bv=a; best=i; } if(a>byPc[N[i].pc]){ byPc[N[i].pc]=a; bmPc[N[i].pc]=i; } }
   if(best<0||now<MIC.mute||micIsQuiet(MIC.pendT)) return;
+  var srt=Array.prototype.slice.call(sal).sort(function(a,b){return a-b}), med=srt[srt.length>>1]||1e-9;
+  var pk=sal[best]/med;
+  if(MIC.dbg) MIC.dbg.push(['pk',+pk.toFixed(1)]);
+  if(pk<MIC.pkMin) return;
   var pc=N[best].pc, m=N[best].m, exp=MIC.expect?MIC.expect():-1;
-  if(exp>=0&&exp!==pc&&byPc[exp]>=0.45*bv){ pc=exp; m=N[bmPc[exp]].m; }
+  if(exp>=0&&exp!==pc&&byPc[exp]>=0.45*bv&&sal[bmPc[exp]]/med>=MIC.pkMin){ pc=exp; m=N[bmPc[exp]].m; }
   if(pc===MIC.lastPc&&MIC.pendT-MIC.lastT<450) return;
   MIC.lastPc=pc; MIC.lastT=MIC.pendT; MIC.heard=pcName(pc);
   if(MIC.dbg) MIC.dbg.push([Math.round(MIC.pendT),pc,+(bv/gmax).toFixed(2)]);
@@ -1956,7 +1985,7 @@ function micLive(){
   var e=$('micLive'); if(!e) return;
   var lv=Math.max(0,Math.min(1,(Math.log(MIC.rms+1e-6)/Math.LN10+3)/2.3));
   var bar=e.querySelector('i'); if(bar) bar.style.width=(lv*100).toFixed(0)+'%';
-  var t=e.querySelector('b'); if(t) t.textContent=MIC.heard?'Oigo: '+MIC.heard:'Esperando una nota…';
+  var t=e.querySelector('b'); if(t) t.textContent=MIC.heard?'Oigo: '+MIC.heard:(MIC.peak>0?'Te oigo, toca una nota':'Sin señal…');
 }
 /* Tecla del piano virtual para una nota real */
 function micKeyFor(m){

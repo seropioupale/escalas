@@ -173,6 +173,11 @@ tono sintético sencillo.
 
 REGISTRO DE CAMBIOS
 -------------------
+v1.6.1 (17-11-2026)
+- Micrófono arreglado en iPhone/iPad: Safari no pasaba el sonido al
+  detector. Si el micro no da señal, reintenta solo y avisa.
+- Detección más sensible con el piano lejos y que ignora el ruido.
+
 v1.6 (17-11-2026)
 - Práctica con el piano real por micrófono: rutina guiada en 7 pasos con
   tecla y dedo, aciertos y errores, tempo, regularidad y dónde fallas.
