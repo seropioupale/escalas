@@ -173,6 +173,10 @@ tono sintético sencillo.
 
 REGISTRO DE CAMBIOS
 -------------------
+v1.6.2 (17-11-2026)
+- Micrófono más rápido: escucha unas 80 veces por segundo, sin depender
+  de la pantalla, y la nota que toca se acepta en cuanto empieza a sonar.
+
 v1.6.1 (17-11-2026)
 - Micrófono arreglado en iPhone/iPad: Safari no pasaba el sonido al
   detector. Si el micro no da señal, reintenta solo y avisa.

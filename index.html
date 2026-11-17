@@ -693,7 +693,7 @@ body[data-view="guires"] #guires{display:flex}
       <div class="row-btns"><button class="ghost" id="btnGBack" type="button">Volver al explorador</button></div>
       <button class="cta" id="btnGAgain" type="button">Repetir paso</button>
     </section>
-    <p class="ver">Versión 1.6.1</p>
+    <p class="ver">Versión 1.6.2</p>
   </div>
 </main>
 
@@ -1181,7 +1181,7 @@ function impPump(){
   var beat=60/IMP.bpm, sc=S[IMP.sk];
   while(IMP.t0+IMP.next*beat<actx.currentTime+0.2){
     var t=IMP.t0+IMP.next*beat, b=IMP.next%4, bar=Math.floor(IMP.next/4);
-    if(IMP.bg!=='none') micQuiet(t,0.2);
+    if(IMP.bg!=='none') micQuiet(t,0.12);
     if(IMP.bg==='metro'||IMP.bg==='vamp') impClick(t,b===0);
     if(b===0){
       if(IMP.bg==='drone'&&bar%2===0){
@@ -1874,7 +1874,7 @@ function micStart(cb){
       MIC.stream=s; micBuild(c); MIC.on=true; MIC.armed=true; MIC.lastPc=-1; MIC.t0=performance.now(); MIC.peak=0; MIC.retry=0; MIC.noise=0;
       settings.mic=true; save('ee.settings.v1',settings);
       micSetMsg('Escuchando tu piano. Toca una nota para probar.');
-      cancelAnimationFrame(MIC.raf); MIC.raf=requestAnimationFrame(micLoop);
+      clearInterval(MIC.raf); MIC.raf=setInterval(micLoop,12);
       paintMicUI(); if(cb) cb(true);
     },function(){
       micSetMsg('Sin permiso de micrófono. Actívalo en Ajustes del iPhone o iPad para esta app y vuelve a intentarlo.');
@@ -1907,7 +1907,7 @@ function micWatch(now){
   }
 }
 function micStop(){
-  MIC.on=false; cancelAnimationFrame(MIC.raf);
+  MIC.on=false; clearInterval(MIC.raf);
   try{ if(MIC.stream) MIC.stream.getTracks().forEach(function(t){t.stop()}); if(MIC.src) MIC.src.disconnect(); }catch(e){}
   MIC.stream=null; MIC.src=null; MIC.an=null;
   settings.mic=false; save('ee.settings.v1',settings); micSetMsg(''); paintMicUI();
@@ -1935,12 +1935,12 @@ function micPrep(sr){
 }
 function micLoop(){
   if(!MIC.on||!MIC.an) return;
-  MIC.raf=requestAnimationFrame(micLoop);
-  var c=MIC.c, now=performance.now();
+  var c=MIC.c, now=performance.now(), dtf=MIC.lastTick?Math.min(4,(now-MIC.lastTick)/16.7):1;
+  MIC.lastTick=now;
   MIC.frame++;
   if(MIC.c&&MIC.c.state!=='running'&&MIC.frame%30===0) try{ MIC.c.resume(); }catch(e){}
   if(MIC.frame%2===0){ MIC.an.getFloatTimeDomainData(MIC.buf); var rs=0, pk=0; for(var q=0;q<MIC.buf.length;q+=2){ var v0=MIC.buf[q]; rs+=v0*v0; if(v0>pk) pk=v0; else if(-v0>pk) pk=-v0; } MIC.rms=Math.sqrt(rs/(MIC.buf.length/2)); if(pk>MIC.peak) MIC.peak=pk; if(MIC.retry<2) micWatch(now); }
-  if(MIC.frame%8===0) micLive();
+  if(MIC.frame%10===0) micLive();
   if(!MIC.notes) micPrep(c.sampleRate);
   var F=MIC.fbuf; MIC.an2.getFloatFrequencyData(F);
   var N=MIC.notes, sal=MIC.sal||(MIC.sal=new Float32Array(N.length)), gmax=0, imax=0, im=-1, i, j;
@@ -1951,13 +1951,27 @@ function micLoop(){
   }
   for(i=0;i<N.length;i++){
     var inc=sal[i]-MIC.mem[i]; if(inc<0) inc=0;
-    MIC.mem[i]=Math.max(MIC.mem[i]*0.9,sal[i]);
+    MIC.mem[i]=Math.max(MIC.mem[i]*Math.pow(0.9,dtf),sal[i]);
     if(MIC.pend) MIC.acc[i]+=inc;
     if(inc>imax){ imax=inc; im=i; }
   }
   MIC.gmax=gmax;
   MIC.noise=MIC.noise?(gmax<MIC.noise?MIC.noise*0.7+gmax*0.3:MIC.noise*1.003):gmax;
   MIC.floor=Math.max(0.00002,MIC.noise*3);
+  var exp0=MIC.expect?MIC.expect():-1;
+  if(exp0>=0&&now>MIC.refr&&gmax>MIC.floor&&exp0!==MIC.lastPc&&now>MIC.mute){
+    var be=-1, bi=0, mi2=0;
+    for(i=0;i<N.length;i++){ var d2=sal[i]-(MIC.prev?MIC.prev[i]:sal[i]); if(d2>mi2) mi2=d2; if(N[i].pc===exp0&&d2>bi){ bi=d2; be=i; } }
+    if(be>=0&&bi>0.08*gmax&&bi>MIC.floor&&bi>=0.9*mi2){
+      var srt0=Array.prototype.slice.call(sal).sort(function(a,b){return a-b}), med0=srt0[srt0.length>>1]||1e-9;
+      if(sal[be]/med0>=5&&!micIsQuiet(now)){
+        MIC.pend=0; MIC.refr=now+90; MIC.lastPc=exp0; MIC.lastT=now; MIC.heard=pcName(exp0);
+        if(MIC.dbg) MIC.dbg.push(['ev',Math.round(now-MIC.t0),exp0,'r']);
+        MIC.prev=Float32Array.from(sal); micNote(N[be].m); return;
+      }
+    }
+  }
+  MIC.prev=Float32Array.from(sal);
   if(!MIC.pend){
     if(now>MIC.refr&&gmax>MIC.floor&&imax>0.12*gmax&&imax>MIC.floor*0.5){
       MIC.pend=1; MIC.acc.fill(0); MIC.acc[im]+=imax; MIC.pendT=now;
@@ -1965,7 +1979,7 @@ function micLoop(){
     return;
   }
   MIC.pend++;
-  if(MIC.pend<4) return;
+  if(now-MIC.pendT<40) return;
   MIC.pend=0; MIC.refr=now+90;
   var best=-1, bv=0, byPc=[0,0,0,0,0,0,0,0,0,0,0,0], bmPc=[];
   for(i=0;i<N.length;i++){ var a=MIC.acc[i]; if(a>bv){ bv=a; best=i; } if(a>byPc[N[i].pc]){ byPc[N[i].pc]=a; bmPc[N[i].pc]=i; } }
@@ -1978,7 +1992,7 @@ function micLoop(){
   if(exp>=0&&exp!==pc&&byPc[exp]>=0.45*bv&&sal[bmPc[exp]]/med>=MIC.pkMin){ pc=exp; m=N[bmPc[exp]].m; }
   if(pc===MIC.lastPc&&MIC.pendT-MIC.lastT<450) return;
   MIC.lastPc=pc; MIC.lastT=MIC.pendT; MIC.heard=pcName(pc);
-  if(MIC.dbg) MIC.dbg.push([Math.round(MIC.pendT),pc,+(bv/gmax).toFixed(2)]);
+  if(MIC.dbg) MIC.dbg.push(['ev',Math.round(now-MIC.t0),pc]);
   micNote(m);
 }
 function micLive(){
